@@ -1,0 +1,1 @@
+# get all files from the input folder and all subfolders and sort the resulting list
