@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[75]:
+# In[2]:
 
 #!python2
 # getFileList.py - returns absolute paths of all files in a folder
@@ -11,53 +11,24 @@
 import os, natsort
 
 
-# In[76]:
-
-# get the input directory from a string
-inputDirectory='C:\\Users\\LucaM\\envs\\py27\\share'
-
-
-# In[89]:
+# In[53]:
 
 # get basenames of all files in a directory (including subdirectories)
-i=0
-filenameList=[]
-for foldernames, subfolders, filenames in os.walk(inputDirectory):
-    for filename in filenames:
-        #print(os.path.join(foldernames, filename))
-        filenameList.append(os.path.join(foldernames, filename))
-        print(filename)
 
 
-# In[91]:
-
-# sort the basenames with natsort
-baseNames=[]
-for i in filenameList:
-    baseNames.append(os.path.basename(i))
+def getFileList(targetPath='.\\'):
+    print('Getting files from: %s' % targetPath)
     
-sortedBasenames=natsort.natsorted(baseNames)
+    if not os.path.isdir(targetPath):
+        print('Path not found.')
+        return None
+    i=0
+    filenameList=[]
+    for foldernames, subfolders, filenames in os.walk(targetPath):
+        for filename in filenames:
+            #print(os.path.join(foldernames, filename))
+            filenameList.append(os.path.join(foldernames, filename))
+    filenameList=natsort.natsorted(filenameList)
 
-for i in sortedBasenames:
-    print(i)
-
-
-# In[92]:
-
-# Ok, this is probably not the way one would do it..
-# any suggestions to do do it properly?
-
-filenameListSorted=[]
-for i in sortedBasenames:
-    for n in filenameList:
-        if n.endswith(i):
-            filenameListSorted.append(n)
-            
-for i in filenameListSorted:
-    print(i)
-
-
-# In[ ]:
-
-
+    return filenameList
 
