@@ -5,7 +5,7 @@
 
 #!python2
 # getFileList.py - returns absolute paths of all files in a folder
-# including subfolders. naturally sorted according to the basenames.
+# including subfolders, naturally sorted.
 
 # import packages
 import os, natsort
