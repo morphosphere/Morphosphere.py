@@ -1,34 +1,47 @@
 
 # coding: utf-8
-
-# In[2]:
-
 #!python2
-# getFileList.py - returns absolute paths of all files in a folder
-# including subfolders, naturally sorted.
+
+# Written by Fanny Georgi and Luca Murer for MorphoSphere, 2016
+
+# getFileList.py
+# Script that returns absolute paths of all files in an input directory including subfolders, naturally sorted
+
+# Input: inputDirectory as string
+# Returns: filenameList as one column numpy string array
 
 # import packages
-import os, natsort
+import os, natsort, numpy
 
-
-# In[53]:
-
-# get basenames of all files in a directory (including subdirectories)
-
-
-def getFileList(targetPath='.\\'):
-    print('Getting files from: %s' % targetPath)
+# retrieve basenames of all files in a target directory (including subdirectories)
+def getFileList(inputDirectory='.\\'):
+    print('Reading files from: %s' % inputDirectory)
     
-    if not os.path.isdir(targetPath):
+    if not os.path.isdir(inputDirectory):
         print('Path not found.')
         return None
-    i=0
-    filenameList=[]
-    for foldernames, subfolders, filenames in os.walk(targetPath):
+    
+    # read basenames of all .TIF files in the input directory (including subdirectories) into array, then sort naturally
+    filenameList = []
+    i = 0
+    tifFiles = re.compile(r'^.*[A-Z][0-9]*_w[0-9]*\.tif$', re.IGNORECASE)
+    for foldernames, subfolders, filenames in os.walk(inputDirectory):
         for filename in filenames:
-            #print(os.path.join(foldernames, filename))
-            filenameList.append(os.path.join(foldernames, filename))
+            if tifFiles.match(filename) != None:
+                #print(os.path.join(foldernames, filename))
+                filenameList.append(os.path.join(foldernames, filename))
     filenameList=natsort.natsorted(filenameList)
+    
+    # convert file list into 1 colon numpy string array, this makes regexing easier
+    filenameList = numpy.array(filenameList, dtype=str).T
+    #print filenameList.shape
+    #print filenameList
+    #print type(filenameList[0])
+            
+    # display number of files detected
+    numberOfFiles = len(filenameList)
+    numberOfPlates = numberOfFiles/384
+    print "%s files have been detected, equal to %s plates." % (numberOfFiles, numberOfPlates)
 
     return filenameList
 
