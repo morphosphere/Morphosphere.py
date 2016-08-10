@@ -12,9 +12,13 @@
 
 # import packages
 import os, natsort, numpy
+from datetime import datetime
 
 # retrieve basenames of all files in a target directory (including subdirectories)
 def getFileList(inputDirectory='.\\'):
+    
+    # print current time for logging
+    print datetime.now()
     print('Reading files from: %s' % inputDirectory)
     
     if not os.path.isdir(inputDirectory):
