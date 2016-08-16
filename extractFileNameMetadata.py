@@ -42,7 +42,7 @@ def extractFileNameMetadata(fileList):
     i = 0
     j = 0
 
-    for i in filenameData:
+    for i in fileList:
         match = filePattern.search(i)
         if match.group('channel') in acceptedChannels and match.group('wellID') in acceptedWells:
             filenameMetadata[j, 0] = i
@@ -75,4 +75,4 @@ def extractFileNameMetadata(fileList):
     selectedFilenameList = numpy.array(selectedFilenameList, dtype=str).T
     #print selectedFilenameList
 
-    #return filenameMetadata, selectedFilenameList
+    return filenameMetadata, selectedFilenameList
