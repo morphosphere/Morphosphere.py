@@ -8,7 +8,7 @@
 # regular expressions. Note that these need to be custom-adjusted for specific file architectures and filenames.
 
 # Input: fileList as one column numpy string array
-# Returns: filenameMetadata as numberOfFiles x keys numpy character array
+# Returns: filenameMetadata as numberOfSelectedFiles x keys numpy character array
          # selectedFilenameList as one column numpy string array
 
 # import packages
