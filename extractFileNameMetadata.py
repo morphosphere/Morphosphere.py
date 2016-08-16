@@ -29,10 +29,15 @@ def extractFileNameMetadata(fileList):
 
     selectedFilenameList = []
     
-    # define wells to analyze
-    acceptedChannels = {'1', '2'}
-    #!!!! add shuffling for wells from two lists for column and row
-    acceptedWells = {'A01', 'A02'}
+    # define wells, channels etc to be analyzed to filter list of files
+    acceptedWells = []
+    acceptedRows = ['A', 'B']
+    acceptedColums = ['01', '02']
+    for r in acceptedRows:
+        for c in acceptedColums:
+            acceptedWells.append(r+c)   
+        
+    acceptedChannels = ['1', '2']
 
     i = 0
     j = 0
