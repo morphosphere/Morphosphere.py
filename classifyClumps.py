@@ -1,1 +1,0 @@
-#load trained weights to the CNN and classify the input Clumps
