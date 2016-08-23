@@ -8,7 +8,7 @@ Created on Sun Aug 21 13:06:37 2016
 
 def generateBatch(currentSpheroidSet, currentLabelSet, maximumImageSize = 1358, outputImageSize = 32, numberOfReplicates = 11):
 
-    #transform and expand data for deep learning
+#transform and expand data for deep learning
 
     #segmentationData = pickle.load(open("segmentationData.p", "rb"))
     #currentSpheroidSet = segmentationData['testSpheroids']
@@ -48,20 +48,22 @@ def generateBatch(currentSpheroidSet, currentLabelSet, maximumImageSize = 1358, 
     iLabel = 0
     for currentImage in currentSpheroidSet:
         imageHeight, imageWidth = currentImage.shape[:2]
-        canvas = np.zeros((maximumImageSize, maximumImageSize), np.uint8)
-        if imageHeight < maximumImageSize:
-
-            minRow = int(round(maximumImageSize/2 - imageHeight/2))
-            maxRow = int(round(maximumImageSize/2 + imageHeight/2))
-            minCol = int(round(maximumImageSize/2 - imageHeight/2))
-            maxCol = int(round(maximumImageSize/2 + imageHeight/2))
-            canvas[minRow:maxRow,minCol:maxCol] = currentImage
-            currentRescaledImage = skimage.transform.resize(canvas,(outputImageSize,outputImageSize)) # rescale the canvas
-        else:
-            currentRescaledImage = currentImage
+        
         for iRep in range(0,numberOfReplicates):
+            canvas = np.zeros((maximumImageSize, maximumImageSize), np.uint8)
+            if iRep == 0:
+                if imageHeight < maximumImageSize:
+                    minRow = int(round(maximumImageSize/2 - imageHeight/2))
+                    maxRow = int(round(maximumImageSize/2 + imageHeight/2))
+                    minCol = int(round(maximumImageSize/2 - imageHeight/2))
+                    maxCol = int(round(maximumImageSize/2 + imageHeight/2))
+                    canvas[minRow:maxRow,minCol:maxCol] = currentImage
+                else:
+                    canvas = currentImage
+            else:
+                canvas = randomtransform(canvas)
 
-            currentRescaledImage = randomtransform(currentRescaledImage)
+            currentRescaledImage = skimage.transform.resize(canvas,(outputImageSize,outputImageSize)) # rescale the canvas    
             if i==0:
                 currentBatchSpheroids = np.reshape(currentRescaledImage,(1,outputImageSize*outputImageSize))
 

@@ -14,10 +14,11 @@ def segmentSpheroid(inputImagePath,dilationDisk = 12,blockSize = 501, minSpheroi
     #import matplotlib.pyplot as plt
     import numpy as np
 
-    inputImage = cv2.imread(inputImagePath,0)
-    processedImage = skimage.util.img_as_ubyte(inputImage)
-
-    thresholdedImage = cv2.adaptiveThreshold(processedImage,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY_INV,blockSize,0)
+    inputImage = cv2.imread(inputImagePath,0) #0 = grey, 1=RGB, ..
+    processedImage = skimage.util.img_as_ubyte(inputImage) #convert to unsigned 8bit
+    
+    # here error for conversion
+    thresholdedImage = cv2.adaptiveThreshold(processedImage,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY_INV,blockSize,0) #return inverted threshold, 0 = threshold correction factor
     selem = skimage.morphology.disk(dilationDisk)
 
     thresholdedImage = cv2.dilate(thresholdedImage,selem,iterations = 1)
