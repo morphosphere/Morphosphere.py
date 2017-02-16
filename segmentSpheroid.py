@@ -11,11 +11,15 @@ def segmentSpheroid(inputImagePath,dilationDisk = 12,blockSize = 501, minSpheroi
     import cv2
     from scipy import ndimage
     from skimage import measure,morphology
-    #import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt
     import numpy as np
 
-    inputImage = cv2.imread(inputImagePath,0) #0 = grey, 1=RGB, ..
-    processedImage = skimage.util.img_as_ubyte(inputImage) #convert to unsigned 8bit
+    inputImage = cv2.imread(inputImagePath, -1) #0 = grey, 1=RGB, .. -1 = as is
+    
+    processedImage = cv2.convertScaleAbs(inputImage, alpha=(255.0/65535.0))
+    #processedImage = inputImage.astype('uint8')  #convert to unsigned 8bit
+    #processedImage = skimage.util.img_as_ubyte(inputImage) #
+    #processedImage = inputImage #don't convert, then doesn't work
     
     # here error for conversion
     thresholdedImage = cv2.adaptiveThreshold(processedImage,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY_INV,blockSize,0) #return inverted threshold, 0 = threshold correction factor
@@ -80,7 +84,7 @@ def segmentSpheroid(inputImagePath,dilationDisk = 12,blockSize = 501, minSpheroi
     croppedImage  =  inputImage[minRow:maxRow,minCol:maxCol]*croppedBWImage
 
     spheroidAttributes = {'area': area ,'diameter': diameter,'circularity': circularity,'majorAxis': majorAxis,'minorAxis': minorAxis}
-    '''
+
     fullImage = inputImage*spheroidBWImage
 
     plt.figure(1)
@@ -89,8 +93,9 @@ def segmentSpheroid(inputImagePath,dilationDisk = 12,blockSize = 501, minSpheroi
     plt.imshow(croppedImage)
 
     # plot_comparison(inputImage,spheroidBWImage,inputImagePath)
+    plt.set_cmap('gray')
     plt.show()
-    '''
+
    
     return croppedImage,croppedBWImage,spheroidAttributes
 

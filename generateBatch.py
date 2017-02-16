@@ -6,7 +6,7 @@ Created on Sun Aug 21 13:06:37 2016
 """
 
 
-def generateBatch(currentSpheroidSet, currentLabelSet, maximumImageSize = 1358, outputImageSize = 32, numberOfReplicates = 11):
+def generateBatch(currentSpheroidSet, currentLabelSet, maximumImageSize = 2059, outputImageSize = 28, numberOfReplicates = 10):
 
 #transform and expand data for deep learning
 
@@ -16,7 +16,6 @@ def generateBatch(currentSpheroidSet, currentLabelSet, maximumImageSize = 1358, 
     # import cPickle as pickle
 
     import numpy as np
-    #import matplotlib.pyplot as plt
 
     import skimage
     from skimage import transform
@@ -33,17 +32,6 @@ def generateBatch(currentSpheroidSet, currentLabelSet, maximumImageSize = 1358, 
         randomNum = np.random.randint(181)
         outputImage = skimage.transform.rotate(outputImage, randomNum)
         return outputImage
-    #test for randomTransform
-    '''
-    outputImage = randomtransform(segmentationData['testSpheroids'][1])
-    plt.figure(1)
-    plt.imshow(segmentationData['testSpheroids'][1])
-    plt.figure(2)
-    plt.imshow(outputImage)
-    plt.set_cmap('gray')
-    plt.show()
-
-    '''
     i=0
     iLabel = 0
     for currentImage in currentSpheroidSet:
@@ -51,30 +39,29 @@ def generateBatch(currentSpheroidSet, currentLabelSet, maximumImageSize = 1358, 
         
         for iRep in range(0,numberOfReplicates):
             canvas = np.zeros((maximumImageSize, maximumImageSize), np.uint8)
-            if iRep == 0:
-                if imageHeight < maximumImageSize:
-                    minRow = int(round(maximumImageSize/2 - imageHeight/2))
-                    maxRow = int(round(maximumImageSize/2 + imageHeight/2))
-                    minCol = int(round(maximumImageSize/2 - imageHeight/2))
-                    maxCol = int(round(maximumImageSize/2 + imageHeight/2))
-                    canvas[minRow:maxRow,minCol:maxCol] = currentImage
-                else:
-                    canvas = currentImage
+            
+            if imageHeight < maximumImageSize:
+                minRow = int(round(maximumImageSize/2 - imageHeight/2))
+                maxRow = int(round(maximumImageSize/2 + imageHeight/2))
+                minCol = int(round(maximumImageSize/2 - imageHeight/2))
+                maxCol = int(round(maximumImageSize/2 + imageHeight/2))
+                canvas[minRow:maxRow,minCol:maxCol] = currentImage
             else:
+                canvas = currentImage
+            if iRep > 0:
                 canvas = randomtransform(canvas)
-
+    
             currentRescaledImage = skimage.transform.resize(canvas,(outputImageSize,outputImageSize)) # rescale the canvas    
+        
             if i==0:
                 currentBatchSpheroids = np.reshape(currentRescaledImage,(1,outputImageSize*outputImageSize))
-
                 currentBatchLabels = currentLabelSet[iLabel]
             else:
-                currentTransformedImage = np.reshape(currentRescaledImage, (1, outputImageSize * outputImageSize))
+                currentTransformedImage = np.reshape(currentRescaledImage, (1, outputImageSize * outputImageSize))      
                 currentBatchSpheroids = np.vstack((currentBatchSpheroids,currentTransformedImage))
                 currentBatchLabels = np.vstack((currentBatchLabels,currentLabelSet[iLabel]))
             i += 1
         iLabel += 1
-
 
 
     #randomize Rows
@@ -85,11 +72,4 @@ def generateBatch(currentSpheroidSet, currentLabelSet, maximumImageSize = 1358, 
     currentBatchLabels = np.squeeze(currentBatchLabels.astype(np.int64))
     outputTuple = (currentBatchSpheroids,currentBatchLabels)
     return outputTuple
-    '''
-    plt.imshow(currentBatchSpheroids)
-
-    plt.set_cmap('gray')
-    plt.show()
-    '''
-
 
