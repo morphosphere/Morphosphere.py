@@ -4,10 +4,19 @@ datasetCreatorGUI: GUI to build dataset for MorphoSphere
 
 """
 
-# UI for preparing training set for the CNN
-# to be invoked in Jupyter
+# Prerequisites:
+# (-) Delete Thumbs from all folders to be included in the data pool
+# - Ensure only raw data is in the specified input directory
+
+# Running instructions:
+# to be invoked in Jupyter (Fanny: not as Admin)
+
+
 import time
-from os import listdir, walk
+from os import listdir, walk, path, makedirs
+import glob
+import re
+from random import shuffle
 from IPython.display import Image, display, clear_output
 from ipywidgets import widgets
 
@@ -19,18 +28,19 @@ def submit_results(results, path):
     print("results saved to:" + path + 'results.csv')
 
 
-def getImageFiles(path, pattern):
-    files = []
+def getImageFiles(imagesPath, pattern):
+    fileList = []
 
-    for (dirpath, dirnames, filenames) in walk(path):
-        files.extend(filenames)
-        break
-    imageFiles = [f for f in files if re.match(pattern, f)]
-    return imageFiles
+    for folders, subfolders, filenames in walk(imagesPath):
+        for filename in filenames:
+            if re.match(pattern, filename):
+                fileList.append(path.join(folders, filename))
 
+    shuffle(fileList)
+    return fileList
 
-def redraw(choices, x, i):
-    display(Image(imagesPath + x[i]))
+def redraw(choices, imagesList, i):
+    display(Image(imagesList[i]))
     time.sleep(1)
 
     buttons = [widgets.Button(description=choice) for choice in choices]
@@ -40,11 +50,11 @@ def redraw(choices, x, i):
 
     def on_button_clicked(b):
         # [insert code to record choice]
-        value[x[i]] = b.description
+        value[imagesList[i]] = b.description
         container.close()
         clear_output()
-        if (i <= len(x) - 2):
-            redraw(choices, x, i + 1)
+        if (i <= len(imagesList) - 2):
+            redraw(choices, imagesList, i + 1)
         else:
             print(value)
             submit_results(value, imagesPath)
@@ -54,16 +64,26 @@ def redraw(choices, x, i):
 
 
 global value
-global imagesPath
 
 # define constants
-imagesPath = 'C:\\Users\\Artur\\Documents\\images_test\\'
-extension = "jpg"
-choices = ['spheroid', 'non-spheroid']
+imagesPath = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\20161111_1-12-6_DyingPhenotype\\'
+outputPath = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\InputDataGUI\\'
+extension = "TIF"
+choices = ['healthy_spheroid', 'healthy_non-spheroid', 'unhealthy_spheroid', 'dead_spheroid', 'exclude: oof/ dirt/ non-TL']
+sizeOfSet = 50 # number of images per set to be selected
+
+# create output directories
+choiceNumber = len(choices) - 1
+choice = 0
+while choice < choiceNumber:
+    if not path.exists(outputPath + choices[choice]):
+        makedirs(outputPath + choices[choice])
+    choice = choice + 1
 
 # invoking
 value = {}
-imagesList = getImageFiles(imagesPath, re.compile(r".*(" + extension + ")"))
+imagesList = getImageFiles(imagesPath, re.compile(r".*" + extension))
 print('Number of Images to classify: ' + str(len(imagesList)))
+#print "There are %d images ready for manual classification." % len(fileList)
 
 redraw(choices, imagesList, 0)  # initializes the first choice
