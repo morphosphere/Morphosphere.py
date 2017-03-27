@@ -12,8 +12,10 @@ TrainingSetCreatorGUI: GUI to build data set for MorphoSphere
 # - Build .ui file using Qt Designer: …\Anaconda2\Library\bin\designer-qt4.exe.
 
 ########################################################################################################################
-# To do:
+# To do (indicated by ##):
+# - Include time stamp in printed output.
 # - Check if user input directories exist
+# - Check if output directories are empty, if not, require user to proceed by pressing 'y'
 # - Perform check if image directory exists
 # - Print number of images per set and class after every assignment or after key input
 # - Replace .ui by soft-coded button design
@@ -32,6 +34,8 @@ from random import shuffle
 import numpy as np
 
 ########################################################################################################################
+print 'Started the MorphoSphere Data Set Generator.'
+
 # Define variables
 ## make this an optional pop-up window
 imagesDirectory = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\20161111_1-12-6_DyingPhenotype\\'
@@ -53,13 +57,18 @@ classes = ['healthy_spheroid', 'healthy_non-spheroid', 'unhealthy_spheroid', 'de
 # Create necessary directories
 sets = ['Test','Training','Validation']
 for iSet in sets:
-    for iClass in classes:
+    for iClass in classes[:-1]:
         outputPath = outputDirectory+'\\'+iSet+'\\'+iClass
         if not path.exists(outputPath):
             makedirs(outputPath)
+# Create separate folder for excluded images, disable if desired
+excludePath = outputDirectory+'\\'+classes[-1]
+makedirs(excludePath)
+print 'Created all necessary output directories.'
 
 ########################################################################################################################
 # Generate list of images to classify from selected input directory
+print 'Starting to assemble list of images for manual classification from ' + imagesDirectory + '.'
 global value
 value = {}
 
@@ -125,6 +134,7 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
         self.class5Button.clicked.connect(self.class5Button_clicked)
 
         # Define button text and shortcuts
+        print 'Assign the image shown to a class by pressing the shortcut "Alt" + the "number" displayed on the button.'
         self.class1Button.setText('&1 ' + classes[0]) # 'Alt' + '1'
         self.class2Button.setText('&2 ' + classes[1]) # 'Alt' + '2'
         self.class3Button.setText('&3 ' + classes[2]) # 'Alt' + '3'
@@ -146,21 +156,7 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
 
         if len(imagesList) >= numberOfImagesNeeded:
             ## check if image exists
-
-            image = cv2.imread(imagesList[self.imageCounter], 0)  # 0=grey, 1=RGB, -1=unchanged
-            self.imageResized = cv2.resize(image, (self.height, self.width), interpolation = cv2.INTER_CUBIC)
-            self.scaleFactor = 5.0
-            self.sliderFactor.sliderReleased.connect(self.factor_changed)
-            self.scaleAddend = 0.0
-            self.sliderAddend.valueChanged.connect(self.addend_changed)
-            self.imageFactor = cv2.multiply(self.imageResized, np.array([self.scaleFactor]))
-            self.imageAddend = cv2.add(self.imageFactor, np.array([self.scaleAddend]))
-            self.imageRGB = cv2.cvtColor(self.imageAddend, cv2.COLOR_GRAY2RGB)
-            self.qImage = QtGui.QImage(self.height, self.width, QtGui.QImage.Format_RGB32)
-            for x in xrange(self.width):
-                for y in xrange(self.height):
-                    self.qImage.setPixel(x, y, QtGui.QColor(*self.imageRGB[x][y]).rgb())
-            self.imageDisplay.setPixmap(QtGui.QPixmap(QtGui.QPixmap(self.qImage).scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
+            self.displayImage()
 
         # Save status
         self.saveButton.setIcon(QtGui.QIcon('..\\img\\logo_save.png'))
@@ -199,23 +195,40 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
                 self.qImage.setPixel(x, y, QtGui.QColor(*self.imageRGB[x][y]).rgb())
         self.imageDisplay.setPixmap(QtGui.QPixmap(QtGui.QPixmap(self.qImage).scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
 
-    def class1Button_clicked(self):
-        print 'Image ' + imagesList[self.imageCounter] + ' is image number ' + str(self.imageCounterClass1 + 1) + ' classified as ' + classes[0]
-        currentImage = cv2.imread(imagesList[self.imageCounter], 0)  # 0=grey, 1=RGB, -1=unchanged
+    def displayImage(self):
+        image = cv2.imread(imagesList[self.imageCounter], 0)  # 0=grey, 1=RGB, -1=unchanged
+        self.imageResized = cv2.resize(image, (self.height, self.width), interpolation=cv2.INTER_CUBIC)
+        self.scaleFactor = 5.0
+        self.sliderFactor.sliderReleased.connect(self.factor_changed)
+        self.scaleAddend = 0.0
+        self.sliderAddend.valueChanged.connect(self.addend_changed)
+        self.imageFactor = cv2.multiply(self.imageResized, np.array([self.scaleFactor]))
+        self.imageAddend = cv2.add(self.imageFactor, np.array([self.scaleAddend]))
+        self.imageRGB = cv2.cvtColor(self.imageAddend, cv2.COLOR_GRAY2RGB)
+        self.qImage = QtGui.QImage(self.height, self.width, QtGui.QImage.Format_RGB32)
+        for x in xrange(self.width):
+            for y in xrange(self.height):
+                self.qImage.setPixel(x, y, QtGui.QColor(*self.imageRGB[x][y]).rgb())
+        self.imageDisplay.setPixmap(
+            QtGui.QPixmap(QtGui.QPixmap(self.qImage).scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
 
         # Create unique image name
         self.imagesDirectoryPattern = re.sub('\\\\', '_', imagesDirectory)
         self.imagePathPattern = re.sub('\\\\', '_', imagesList[self.imageCounter])
         self.imageName = re.sub(self.imagesDirectoryPattern, '', self.imagePathPattern)
 
+    def class1Button_clicked(self):
+        print 'Image ' + imagesList[self.imageCounter] + ' is image number ' + str(self.imageCounterClass1 + 1) + ' classified as ' + classes[0] + '.'
+        self.currentImage = cv2.imread(imagesList[self.imageCounter], 0)  # 0=grey, 1=RGB, -1=unchanged
+
         if self.imageCounterClass1 < imagesPerSet:
-            cv2.imwrite(outputDirectory+'\\'+sets[0]+'\\'+classes[0]+'\\'+ self.imageName, currentImage)
+            cv2.imwrite(outputDirectory+'\\'+sets[0]+'\\'+classes[0]+'\\'+ self.imageName, self.currentImage)
 
         if imagesPerSet <= self.imageCounterClass1 < (2*imagesPerSet):
-            cv2.imwrite(outputDirectory + '\\' + sets[1]+'\\'+classes[0]+'\\'+ self.imageName, currentImage)
+            cv2.imwrite(outputDirectory + '\\' + sets[1]+'\\'+classes[0]+'\\'+ self.imageName, self.currentImage)
 
         if (2*imagesPerSet) <= self.imageCounterClass1 < (3*imagesPerSet):
-            cv2.imwrite(outputDirectory + '\\' + sets[2]+'\\'+classes[0]+'\\'+ self.imageName, currentImage)
+            cv2.imwrite(outputDirectory + '\\' + sets[2]+'\\'+classes[0]+'\\'+ self.imageName, self.currentImage)
 
         if self.imageCounterClass1 > (3*imagesPerSet):
             print "Don't need more images for " + classes[0]
@@ -237,36 +250,141 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
             self.imageCounterClass1 = self.imageCounterClass1 + 1
 
             # Show next image from list
-            image = cv2.imread(imagesList[self.imageCounter], 0)  # 0=grey, 1=RGB, -1=unchanged
-            self.imageResized = cv2.resize(image, (self.height, self.width), interpolation=cv2.INTER_CUBIC)
-            self.scaleFactor = 5.0
-            self.sliderFactor.sliderReleased.connect(self.factor_changed)
-            self.scaleAddend = 0.0
-            self.sliderAddend.valueChanged.connect(self.addend_changed)
-            self.imageFactor = cv2.multiply(self.imageResized, np.array([self.scaleFactor]))
-            self.imageAddend = cv2.add(self.imageFactor, np.array([self.scaleAddend]))
-            self.imageRGB = cv2.cvtColor(self.imageAddend, cv2.COLOR_GRAY2RGB)
-            self.qImage = QtGui.QImage(self.height, self.width, QtGui.QImage.Format_RGB32)
-            for x in xrange(self.width):
-                for y in xrange(self.height):
-                    self.qImage.setPixel(x, y, QtGui.QColor(*self.imageRGB[x][y]).rgb())
-            self.imageDisplay.setPixmap(QtGui.QPixmap(QtGui.QPixmap(self.qImage).scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
+            self.displayImage()
 
     def class2Button_clicked(self):
-        print "button 2 clicked"
+        print 'Image ' + imagesList[self.imageCounter] + ' is image number ' + str(self.imageCounterClass2 + 1) + ' classified as ' + classes[1] + '.'
+        self.currentImage = cv2.imread(imagesList[self.imageCounter], 0)  # 0=grey, 1=RGB, -1=unchanged
+
+        if self.imageCounterClass1 < imagesPerSet:
+            cv2.imwrite(outputDirectory+'\\'+sets[0]+'\\'+classes[1]+'\\'+ self.imageName, self.currentImage)
+
+        if imagesPerSet <= self.imageCounterClass1 < (2*imagesPerSet):
+            cv2.imwrite(outputDirectory + '\\' + sets[1]+'\\'+classes[1]+'\\'+ self.imageName, self.currentImage)
+
+        if (2*imagesPerSet) <= self.imageCounterClass1 < (3*imagesPerSet):
+            cv2.imwrite(outputDirectory + '\\' + sets[2]+'\\'+classes[1]+'\\'+ self.imageName, self.currentImage)
+
+        if self.imageCounterClass1 > (3*imagesPerSet):
+            print "Don't need more images for " + classes[1]
+
+        # Test if end of image list reached
+        if self.imageCounter == (len(imagesList) - 1):
+            print "WARNING: There are no more images to classify."
+            self.imageDisplay.setPixmap(QtGui.QPixmap(QtGui.QPixmap('..\\img\\logo_endOfList.png').scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
+            self.class1Button.setEnabled(False)
+            self.class2Button.setEnabled(False)
+            self.class3Button.setEnabled(False)
+            self.class4Button.setEnabled(False)
+            self.class5Button.setEnabled(False)
+            ## Add printing of number of images per folder.
+
+        if self.imageCounter < (len(imagesList) - 1):
+            self.imageCounter = self.imageCounter + 1
+            self.Counter.display(self.imageCounter)
+            self.imageCounterClass2 = self.imageCounterClass2 + 1
+
+            # Show next image from list
+            self.displayImage()
 
     def class3Button_clicked(self):
-        print "button 3 clicked"
+        print 'Image ' + imagesList[self.imageCounter] + ' is image number ' + str(self.imageCounterClass3 + 1) + ' classified as ' + classes[2] + '.'
+        self.currentImage = cv2.imread(imagesList[self.imageCounter], 0)  # 0=grey, 1=RGB, -1=unchanged
+
+        if self.imageCounterClass1 < imagesPerSet:
+            cv2.imwrite(outputDirectory+'\\'+sets[0]+'\\'+classes[2]+'\\'+ self.imageName, self.currentImage)
+
+        if imagesPerSet <= self.imageCounterClass1 < (2*imagesPerSet):
+            cv2.imwrite(outputDirectory + '\\' + sets[1]+'\\'+classes[2]+'\\'+ self.imageName, self.currentImage)
+
+        if (2*imagesPerSet) <= self.imageCounterClass1 < (3*imagesPerSet):
+            cv2.imwrite(outputDirectory + '\\' + sets[2]+'\\'+classes[2]+'\\'+ self.imageName, self.currentImage)
+
+        if self.imageCounterClass1 > (3*imagesPerSet):
+            print "Don't need more images for " + classes[2]
+
+        # Test if end of image list reached
+        if self.imageCounter == (len(imagesList) - 1):
+            print "WARNING: There are no more images to classify."
+            self.imageDisplay.setPixmap(QtGui.QPixmap(QtGui.QPixmap('..\\img\\logo_endOfList.png').scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
+            self.class1Button.setEnabled(False)
+            self.class2Button.setEnabled(False)
+            self.class3Button.setEnabled(False)
+            self.class4Button.setEnabled(False)
+            self.class5Button.setEnabled(False)
+            ## Add printing of number of images per folder.
+
+        if self.imageCounter < (len(imagesList) - 1):
+            self.imageCounter = self.imageCounter + 1
+            self.Counter.display(self.imageCounter)
+            self.imageCounterClass3 = self.imageCounterClass3 + 1
+
+            # Show next image from list
+            self.displayImage()
 
     def class4Button_clicked(self):
-        print "button 4 clicked"
+        print 'Image ' + imagesList[self.imageCounter] + ' is image number ' + str(self.imageCounterClass4 + 1) + ' classified as ' + classes[3] + '.'
+        self.currentImage = cv2.imread(imagesList[self.imageCounter], 0)  # 0=grey, 1=RGB, -1=unchanged
+
+        if self.imageCounterClass1 < imagesPerSet:
+            cv2.imwrite(outputDirectory+'\\'+sets[0]+'\\'+classes[3]+'\\'+ self.imageName, self.currentImage)
+
+        if imagesPerSet <= self.imageCounterClass1 < (2*imagesPerSet):
+            cv2.imwrite(outputDirectory + '\\' + sets[1]+'\\'+classes[3]+'\\'+ self.imageName, self.currentImage)
+
+        if (2*imagesPerSet) <= self.imageCounterClass1 < (3*imagesPerSet):
+            cv2.imwrite(outputDirectory + '\\' + sets[2]+'\\'+classes[3]+'\\'+ self.imageName, self.currentImage)
+
+        if self.imageCounterClass1 > (3*imagesPerSet):
+            print "Don't need more images for " + classes[3]
+
+        # Test if end of image list reached
+        if self.imageCounter == (len(imagesList) - 1):
+            print "WARNING: There are no more images to classify."
+            self.imageDisplay.setPixmap(QtGui.QPixmap(QtGui.QPixmap('..\\img\\logo_endOfList.png').scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
+            self.class1Button.setEnabled(False)
+            self.class2Button.setEnabled(False)
+            self.class3Button.setEnabled(False)
+            self.class4Button.setEnabled(False)
+            self.class5Button.setEnabled(False)
+            ## Add printing of number of images per folder.
+
+        if self.imageCounter < (len(imagesList) - 1):
+            self.imageCounter = self.imageCounter + 1
+            self.Counter.display(self.imageCounter)
+            self.imageCounterClass4 = self.imageCounterClass4 + 1
+
+            # Show next image from list
+            self.displayImage()
 
     def class5Button_clicked(self):
-        print "button 5 clicked"
-        ## save
-        ## don't change counter
+        print 'Image ' + imagesList[self.imageCounter] + ' was classified as ' + classes[4] + ' and saved in ' + excludePath + '.'
+        self.currentImage = cv2.imread(imagesList[self.imageCounter], 0)  # 0=grey, 1=RGB, -1=unchanged
+
+        # Save to separate folder, disable if desired
+        cv2.imwrite(excludePath+'\\'+ self.imageName, self.currentImage)
+
+        # Test if end of image list reached
+        if self.imageCounter == (len(imagesList) - 1):
+            print "WARNING: There are no more images to classify."
+            self.imageDisplay.setPixmap(QtGui.QPixmap(QtGui.QPixmap('..\\img\\logo_endOfList.png').scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
+            self.class1Button.setEnabled(False)
+            self.class2Button.setEnabled(False)
+            self.class3Button.setEnabled(False)
+            self.class4Button.setEnabled(False)
+            self.class5Button.setEnabled(False)
+            ## Add printing of number of images per folder.
+
+        if self.imageCounter < (len(imagesList) - 1):
+            self.imageCounter = self.imageCounter + 1
+            self.Counter.display(self.imageCounter)
+            # Numbers of images in class 5 is not tracked
+
+            # Show next image from list
+            self.displayImage()
 
     def cancelButton_clicked(self):
+        print 'MorphoSphere Data Set Generator was terminated by the user.'
         self.close()
 
 if __name__ == "__main__":
