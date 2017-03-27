@@ -63,7 +63,9 @@ for iSet in sets:
             makedirs(outputPath)
 # Create separate folder for excluded images, disable if desired
 excludePath = outputDirectory+'\\'+classes[-1]
-makedirs(excludePath)
+if not path.exists(excludePath):
+    makedirs(excludePath)
+
 print 'Created all necessary output directories.'
 
 ########################################################################################################################
