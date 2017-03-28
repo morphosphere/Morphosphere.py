@@ -13,7 +13,7 @@ TrainingSetCreatorGUI: GUI to build data set for MorphoSphere
 
 ########################################################################################################################
 # To do (indicated by ##):
-# - Include time stamp in printed output.
+# - Count images by length of directory list instead of counter to ease assembly in multiple sessions.
 # - Check if user input directories exist
 # - Check if output directories are empty, if not, require user to proceed by pressing 'y'
 # - Perform check if image directory exists
@@ -32,16 +32,17 @@ from os import walk, path, makedirs
 import re
 from random import shuffle
 import numpy as np
+import datetime
 
 ########################################################################################################################
-print 'Started the MorphoSphere Data Set Generator.'
+print str(datetime.datetime.now()) + ': Started the MorphoSphere Data Set Generator.'
 
 # Define variables
 ## make this an optional pop-up window
 imagesDirectory = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\20161111_1-12-6_DyingPhenotype\\'
-outputDirectory = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\InputDataGUI'
+outputDirectory = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\InputDataGUI_1-12-6'
 extension = "TIF"
-imagesPerSet = 1
+imagesPerSet = 100
 
 # For brief testing only
 #currentImagePath = ['..\\img\\20161111-1-12-6-003hps_C03_w1.TIF', '..\\img\\20161119-1-12-6-194hps_C03_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M19_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M17_w1.TIF', '..\\img\\20161118-1-12-6-168hps_J21_w1.TIF', '..\\img\\20161111-1-12-6-003hps_C03_w1.TIF', '..\\img\\20161119-1-12-6-194hps_C03_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M19_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M17_w1.TIF', '..\\img\\20161118-1-12-6-168hps_J21_w1.TIF', '..\\img\\20161111-1-12-6-003hps_C03_w1.TIF', '..\\img\\20161119-1-12-6-194hps_C03_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M19_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M17_w1.TIF', '..\\img\\20161118-1-12-6-168hps_J21_w1.TIF']
@@ -66,11 +67,11 @@ excludePath = outputDirectory+'\\'+classes[-1]
 if not path.exists(excludePath):
     makedirs(excludePath)
 
-print 'Created all necessary output directories.'
+print str(datetime.datetime.now()) + ': Created all necessary output directories.'
 
 ########################################################################################################################
 # Generate list of images to classify from selected input directory
-print 'Starting to assemble list of images for manual classification from ' + imagesDirectory + '.'
+print str(datetime.datetime.now()) + ': Starting to assemble list of images for manual classification from ' + imagesDirectory + '.'
 global value
 value = {}
 
@@ -86,7 +87,7 @@ def getImageFiles(imagesPath, pattern):
     return fileList
 
 imagesList = getImageFiles(imagesDirectory, re.compile(r".*" + extension))
-print str(len(imagesList)) + ' in ' + imagesDirectory + ' found for manual classification.'
+print str(datetime.datetime.now()) + ': ' + str(len(imagesList)) + ' in ' + imagesDirectory + ' found for manual classification.'
 
 ########################################################################################################################
 # Open GUI
@@ -136,7 +137,7 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
         self.class5Button.clicked.connect(self.class5Button_clicked)
 
         # Define button text and shortcuts
-        print 'Assign the image shown to a class by pressing the shortcut "Alt" + the "number" displayed on the button.'
+        print 'HELP: Assign the image shown to a class by pressing the shortcut "Alt" + the "number" displayed on the button.'
         self.class1Button.setText('&1 ' + classes[0]) # 'Alt' + '1'
         self.class2Button.setText('&2 ' + classes[1]) # 'Alt' + '2'
         self.class3Button.setText('&3 ' + classes[2]) # 'Alt' + '3'
@@ -268,7 +269,7 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
             cv2.imwrite(outputDirectory + '\\' + sets[2]+'\\'+classes[1]+'\\'+ self.imageName, self.currentImage)
 
         if self.imageCounterClass1 > (3*imagesPerSet):
-            print "Don't need more images for " + classes[1]
+            print "INFO: Don't need more images for " + classes[1]
 
         # Test if end of image list reached
         if self.imageCounter == (len(imagesList) - 1):
@@ -303,7 +304,7 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
             cv2.imwrite(outputDirectory + '\\' + sets[2]+'\\'+classes[2]+'\\'+ self.imageName, self.currentImage)
 
         if self.imageCounterClass1 > (3*imagesPerSet):
-            print "Don't need more images for " + classes[2]
+            print "INFO: Don't need more images for " + classes[2]
 
         # Test if end of image list reached
         if self.imageCounter == (len(imagesList) - 1):
@@ -338,7 +339,7 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
             cv2.imwrite(outputDirectory + '\\' + sets[2]+'\\'+classes[3]+'\\'+ self.imageName, self.currentImage)
 
         if self.imageCounterClass1 > (3*imagesPerSet):
-            print "Don't need more images for " + classes[3]
+            print "INFO: Don't need more images for " + classes[3]
 
         # Test if end of image list reached
         if self.imageCounter == (len(imagesList) - 1):
@@ -386,7 +387,7 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
             self.displayImage()
 
     def cancelButton_clicked(self):
-        print 'MorphoSphere Data Set Generator was terminated by the user.'
+        print 'WARNING: MorphoSphere Data Set Generator was terminated by the user.'
         self.close()
 
 if __name__ == "__main__":
