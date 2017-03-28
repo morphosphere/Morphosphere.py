@@ -15,7 +15,6 @@ TrainingSetCreatorGUI: GUI to build data set for MorphoSphere
 # To do (indicated by ##):
 # - Count images by length of directory list instead of counter to ease assembly in multiple sessions.
 # - Check if user input directories exist
-# - Check if output directories are empty, if not, require user to proceed by pressing 'y'
 # - Perform check if image directory exists
 # - Print number of images per set and class after every assignment or after key input
 # - Replace .ui by soft-coded button design
@@ -48,24 +47,41 @@ imagesPerSet = 100
 #currentImagePath = ['..\\img\\20161111-1-12-6-003hps_C03_w1.TIF', '..\\img\\20161119-1-12-6-194hps_C03_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M19_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M17_w1.TIF', '..\\img\\20161118-1-12-6-168hps_J21_w1.TIF', '..\\img\\20161111-1-12-6-003hps_C03_w1.TIF', '..\\img\\20161119-1-12-6-194hps_C03_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M19_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M17_w1.TIF', '..\\img\\20161118-1-12-6-168hps_J21_w1.TIF', '..\\img\\20161111-1-12-6-003hps_C03_w1.TIF', '..\\img\\20161119-1-12-6-194hps_C03_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M19_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M17_w1.TIF', '..\\img\\20161118-1-12-6-168hps_J21_w1.TIF']
 #currentImageName = ['test1.TIF', 'test2.TIF', 'test3.TIF', 'test4.TIF','test5.TIF', 'test6.TIF', 'test7.TIF', 'test8.TIF', 'test9.TIF','test10.TIF', 'test11.TIF','test12.TIF']
 
+# Directory checks
+if not path.exists(imagesDirectory):
+    print 'WARNING: The defined input directory does not exist. MorphoShere Data Set Generator will terminate.'
+    exit()
+if not path.exists(outputDirectory):
+    makedirs(outputDirectory)
+
+# Define data sets
+sets = ['Test','Training','Validation']
+
 # Define class options
 classes = ['healthy_spheroid', 'healthy_non-spheroid', 'unhealthy_spheroid', 'dead_spheroid', 'exclude']
 
-# Directory checks
-## check if imagesDirectory exists and is not empty, else give warning
-## check if outputDirectory exists and is empty, else give warning and delete content
+# Check if data set directories exist and require the user to confirm to proceed if it exists
+outputPathCheck = outputDirectory+'\\'+sets[0]+'\\'+classes[0]
+if path.exists(outputPathCheck):
+    print 'QUERY: The defined output directories already exist. To proceed anyway, press [y][Enter], else [n][Enter] to terminate.'
+    proceedFlag = raw_input().lower()
+    if proceedFlag == 'y':
+        # Create necessary directories
+        for iSet in sets:
+            for iClass in classes[:-1]:
+                outputPath = outputDirectory + '\\' + iSet + '\\' + iClass
+                if not path.exists(outputPath):
+                    makedirs(outputPath)
 
-# Create necessary directories
-sets = ['Test','Training','Validation']
-for iSet in sets:
-    for iClass in classes[:-1]:
-        outputPath = outputDirectory+'\\'+iSet+'\\'+iClass
-        if not path.exists(outputPath):
-            makedirs(outputPath)
-# Create separate folder for excluded images, disable if desired
-excludePath = outputDirectory+'\\'+classes[-1]
-if not path.exists(excludePath):
-    makedirs(excludePath)
+        # Create separate folder for excluded images, disable if desired
+        excludePath = outputDirectory + '\\' + classes[-1]
+        if not path.exists(excludePath):
+            makedirs(excludePath)
+    elif proceedFlag == 'n':
+        print 'WARNING: MorphoSphere Data Set Generator was terminated by the user.'
+        exit()
+    else:
+        print 'QUERY: The defined output directories already exist. To proceed anyway, press [y], else [n] to terminate.'
 
 print str(datetime.datetime.now()) + ': Created all necessary output directories.'
 
