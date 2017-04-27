@@ -12,32 +12,27 @@ returns a dictionary with the file attributes (e.g. {'nExposure': '35 ms' ...})
 
 ########################################################################################################################
 # To do (indicated by ##):
-# - generate list of files from gives directory
-# - exclude thumbs
-# - select only transmission light images
-# - exclude unfocused images based on focusing attempts
-# - if multiple TL channels exist, select only best-focused one
+# - Exclude unfocused images based on focusing attempts
+# - Select TL images based on metadata
+# - Write output cvs
+# - Make nice functions
 
 ########################################################################################################################
 # Imports
-
-
-
-########################################################################################################################
-# Read images from directory
-
 from os import walk, path
 from random import shuffle
 import re
 import numpy
 import natsort
+import cv2
 
+########################################################################################################################
+# Read images from directory
 imagesDirectory = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\20160126-1-12-4_Spheroid_Complete\\TestCleanFileList\\'
 outputDirectory = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\TestCleanFileList_out'
 
 # Exclude thumbnails
 # Select clean [number]dps folders, TIFs only
-## include well selection
 pattern = r"^.*\d*dps\\.((?!Thumb).)*.TIF$"
 
 def getImageFiles(imagesPath, pattern):
@@ -63,20 +58,22 @@ imagesList = natsort.natsorted(imagesList)
 # col 5 = timepoint "hps"
 # col 6 = timepoint "dps"
 # col 7 = "experimentNumber"
-# col 8 = "acquisitionDate"
-# col 9 = acquisition channel
-# col 10 = TL flag
-# col 11 = in focus flag
-# col 12 = selected for training flag
-# col 13 = class
-# col 14 = set
-# col 15 = setClass counter
-# col 16 = image height
-# col 17 = image width
-# col 18 = cropped segmented image
-# col 19 = down sampled image
+# col 8 = "date"
+# col 9 = "channel"
+# col 10 = "flagTL"
+# col 11 = "flagFocus"
+# col 12 = "flagWell"
+# col 13 = selected for training flag
+# col 14 = class
+# col 15 = set
+# col 16 = setClass counter
+# col 17 = image height
+# col 18 = image width
+# col 19 = cropped segmented image
+# col 20 = down sampled image
+# Sum =  21 columns
 
-dataTable = numpy.zeros((len(imagesList),20), dtype= object)
+dataTable = numpy.zeros((len(imagesList),21), dtype= object)
 dataTable[:,0] = imagesList
 
 # Iterate over dataTable[:,0] to extract filename-related info
@@ -84,7 +81,7 @@ dataTable[:,0] = imagesList
 for image in range(0,len(dataTable),1):
 
     # Extract file name information, ***NEEDS TO BE CUSTOMIZED***
-    regexFileName = re.search('^.*\\\\(\d+-\d+)_.*\\\\(\d+)dps\\\\(\d{8}).*-p(\d+)-(\d+)hps_([A-Z])(\d\d)_w(\d).*.TIF$', dataTable[image,0])
+    regexFileName = re.search('^.*\\\\.*(\d+-\d+-\d+)_.*\\\\(\d+)dps\\\\(\d{8}).*-p(\d+)-(\d+)hps_([A-Z])(\d\d)_w(\d).*.TIF$', dataTable[image,0])
     dataTable[image,2] = regexFileName.group(4)
     dataTable[image,3] = regexFileName.group(6)
     dataTable[image,4] = regexFileName.group(7)
@@ -97,25 +94,30 @@ for image in range(0,len(dataTable),1):
     # Create unique identifier
     dataTable[image, 1] = 'p' + dataTable[image,2] + '_t' + dataTable[image,5] + '_w' + dataTable[image,3] + dataTable[image,4] + '_c' + dataTable[image,9]
 
+    # Select only certain wells ***NEEDS TO BE CUSTOMIZED***
+    #pattern = r'^.*(?P<timePointDps>[0-9]+)dps\\\\(?P<date>\d{8}).*p(?P<plate>\d+)-(?P<timePointHps>[0-9][0-9][0-9])hps_(?P<row>[A-P])(?P<column>[0][1-6])_w(?P<channel>[1])((?P<exclude>!_Thumb).)*.TIF$'
+    rowPattern = re.compile('[A-P]')
+    columnPattern = re.compile('[0][1-6]')
+    if rowPattern.match(dataTable[image,3]) and columnPattern.match(dataTable[image,4]):
+        dataTable[image, 12] = 1
+
 ########################################################################################################################
 # Select only transmission light images
 
 # Define variables
-imagesDirectory = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\20160126-1-12-4_Spheroid_Complete\\TestCleanFileList\\'
-imageForTest = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\20160126-1-12-4_Spheroid_Complete\\TestCleanFileList\\2\\4dps\\20160130-corning-all-spheroids-p2-095hps_A01_w1.TIF'
+#imagesDirectory = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\20160126-1-12-4_Spheroid_Complete\\TestCleanFileList\\'
+#imageForTest = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\20160126-1-12-4_Spheroid_Complete\\TestCleanFileList\\2\\4dps\\20160130-corning-all-spheroids-p2-095hps_A01_w1.TIF'
 
 ### Dirty image-based approach
-
-import cv2
-
 for currentImage in range(0,len(dataTable),1):
-    imageToAnalyze = cv2.imread(dataTable[currentImage, 0], -1)  # 0 = grey, 1=RGB, -1=unchanged
-    # Analyze mean intensity of image corner to avoid influence of transgene-associated expression
-    imageCropped = imageToAnalyze[0:100, 0:100]
-    if numpy.max(cv2.mean(imageCropped)) > 4000:
-        dataTable[currentImage,10] = 1
-    else:
-        dataTable[currentImage, 10] = 0
+    if dataTable[currentImage,12] == 1:
+        imageToAnalyze = cv2.imread(dataTable[currentImage, 0], -1)  # 0 = grey, 1=RGB, -1=unchanged
+        # Analyze mean intensity of image corner to avoid influence of transgene-associated expression
+        imageCropped = imageToAnalyze[0:100, 0:100]
+        if numpy.max(cv2.mean(imageCropped)) > 4000:
+            dataTable[currentImage,10] = 1
+        else:
+            dataTable[currentImage, 10] = 0
 
 ### Luca's approach, DOES NOT READ ALL INFO
 # def parseImageDescription(fileName):
@@ -219,11 +221,9 @@ for currentImage in range(0,len(dataTable),1):
 ########################################################################################################################
 # Select best-focused image
 
-import cv2
-
 for currentImage in range(0,len(dataTable),1):
-    # Only analyze TL images
-    if dataTable[currentImage,10] == 1:
+    # Only analyze selected wells and TL images
+    if dataTable[currentImage,12] == 1 and dataTable[currentImage,10] == 1:
 
         # Check only if well has not been analyzed (flag will be changed to yes/no)
         if dataTable[currentImage,11] == 0:
@@ -241,11 +241,12 @@ for currentImage in range(0,len(dataTable),1):
 
             # Find max number of channels to check this number -1 of images below
             maxNumberOfChannels = int(numpy.amax(dataTable[:,9]))
-            for imagesBelow in range(1,maxNumberOfChannels- int(dataTable[currentImage,9]),1):
+            for imagesBelow in range(1,maxNumberOfChannels - int(dataTable[currentImage,9]) +1,1):
                 # Find all images of same well and write paths into wellList
                 if dataTable[currentImage + imagesBelow,10] == 1 and dataTable[(currentImage + imagesBelow), 2] == dataTable[currentImage, 2] and dataTable[(currentImage + imagesBelow), 3] == dataTable[currentImage, 3] and dataTable[(currentImage + imagesBelow), 4] == dataTable[currentImage, 4] and dataTable[(currentImage + imagesBelow), 5] == dataTable[currentImage, 5]:
                     newRow = numpy.zeros((1, 3), dtype=object)
                     newRow[0,0] = dataTable[(currentImage + imagesBelow),0]
+                    # Keep track of row in dataTable index
                     newRow[0,2] = currentImage + imagesBelow
 
                     imageToAnalyze = cv2.imread(dataTable[(currentImage + imagesBelow),0], -1) #0 = grey, 1=RGB, -1=unchanged
