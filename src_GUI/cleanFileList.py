@@ -28,12 +28,14 @@ import cv2
 
 ########################################################################################################################
 # Read images from directory
-imagesDirectory = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\20160126-1-12-4_Spheroid_Complete\\TestCleanFileList\\'
-outputDirectory = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\TestCleanFileList_out'
+imagesDirectory = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\20160126-1-12-4_Spheroid_Complete\\'
+analysisTitle ='20160501_Test2'
 
 # Exclude thumbnails
 # Select clean [number]dps folders, TIFs only
-pattern = r"^.*\d*dps\\.((?!Thumb).)*.TIF$"
+pattern = r"^.*w\d((?!_Thumb).)*.TIF$"
+#pattern = r"^.*\\\\\d+\\\\\d+dps\\.((?!Thumb).)*.TIF$"
+
 
 def getImageFiles(imagesPath, pattern):
     fileList = []
@@ -72,6 +74,7 @@ imagesList = natsort.natsorted(imagesList)
 # col 19 = cropped segmented image
 # col 20 = down sampled image
 # Sum =  21 columns
+csvHeader = 'imagePath, uniqueID, plate, row, column, hps, dps, experimentNumber, date, channel, flagTL, flagFocus, flagWell, flagTraining, class, set, setClassCounter, imageHeight, imageWidth, segmentedImage, reducedImage'
 
 dataTable = numpy.zeros((len(imagesList),21), dtype= object)
 dataTable[:,0] = imagesList
@@ -81,24 +84,27 @@ dataTable[:,0] = imagesList
 for image in range(0,len(dataTable),1):
 
     # Extract file name information, ***NEEDS TO BE CUSTOMIZED***
-    regexFileName = re.search('^.*\\\\.*(\d+-\d+-\d+)_.*\\\\(\d+)dps\\\\(\d{8}).*-p(\d+)-(\d+)hps_([A-Z])(\d\d)_w(\d).*.TIF$', dataTable[image,0])
-    dataTable[image,2] = regexFileName.group(4)
-    dataTable[image,3] = regexFileName.group(6)
-    dataTable[image,4] = regexFileName.group(7)
-    dataTable[image,5] = regexFileName.group(5)
-    dataTable[image,6] = regexFileName.group(2)
-    dataTable[image,7] = regexFileName.group(1)
-    dataTable[image,8] = regexFileName.group(3)
-    dataTable[image,9] = regexFileName.group(8)
+    regexFileName = re.search('^.*\\\\\d{8}-(?P<experimentNumber>\d+-\d+-\d+)_.*(?P<timePointDps>[0-9]+)dps\\\\(?P<date>\d{8}).*-p(?P<plate>\d+)-(?P<timePointHps>[0-9][0-9][0-9])hps_(?P<row>[A-Z])(?P<column>[0-9][0-9])_w(?P<channel>[0-9]).TIF$', dataTable[image,0])
+    #regexFileName = re.search('^.*\\\\.*(\d+-\d+-\d+)_.*\\\\(\d+)dps\\\\(\d{8}).*-p(\d+)-(\d+)hps_([A-Z])(\d\d)_w(\d).*.TIF$', dataTable[image,0])
+    print dataTable[image,0]
+    dataTable[image,2] = regexFileName.group('plate')
+    dataTable[image,3] = regexFileName.group('row')
+    dataTable[image,4] = regexFileName.group('column')
+    dataTable[image,5] = regexFileName.group('timePointHps')
+    dataTable[image,6] = regexFileName.group('timePointDps')
+    dataTable[image,7] = regexFileName.group('experimentNumber') +'-' # prevent reading as data
+    dataTable[image,8] = regexFileName.group('date')
+    dataTable[image,9] = regexFileName.group('channel')
 
     # Create unique identifier
     dataTable[image, 1] = 'p' + dataTable[image,2] + '_t' + dataTable[image,5] + '_w' + dataTable[image,3] + dataTable[image,4] + '_c' + dataTable[image,9]
 
-    # Select only certain wells ***NEEDS TO BE CUSTOMIZED***
+    # Select only certain wells, time points etc. ***NEEDS TO BE CUSTOMIZED***
     #pattern = r'^.*(?P<timePointDps>[0-9]+)dps\\\\(?P<date>\d{8}).*p(?P<plate>\d+)-(?P<timePointHps>[0-9][0-9][0-9])hps_(?P<row>[A-P])(?P<column>[0][1-6])_w(?P<channel>[1])((?P<exclude>!_Thumb).)*.TIF$'
     rowPattern = re.compile('[A-P]')
     columnPattern = re.compile('[0][1-6]')
-    if rowPattern.match(dataTable[image,3]) and columnPattern.match(dataTable[image,4]):
+    dpsPattern = re.compile('\d+')
+    if rowPattern.match(dataTable[image,3]) and columnPattern.match(dataTable[image,4]) and dpsPattern.match(dataTable[image,6]):
         dataTable[image, 12] = 1
 
 ########################################################################################################################
@@ -265,9 +271,10 @@ for currentImage in range(0,len(dataTable),1):
                     dataTable[wellList[wellListImage,2],11] = 2
 
 ########################################################################################################################
-# export table and include header
+# Export table and include header
+outputDirectory = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\20160126-1-12-4_Spheroid_Complete_Analysis'
+numpy.savetxt(outputDirectory + '\\' + analysisTitle+'.csv', dataTable, fmt='%5s', delimiter=',', header=csvHeader )
 
-# import numpy
 # a = numpy.array([[0.0,1.630000e+01,1.990000e+01,1.840000e+01],
 #                  [1.0,1.630000e+01,1.990000e+01,1.840000e+01],
 #                  [2.0,1.630000e+01,1.990000e+01,1.840000e+01]])
