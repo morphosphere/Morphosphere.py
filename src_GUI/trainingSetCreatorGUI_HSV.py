@@ -13,6 +13,7 @@ TrainingSetCreatorGUI: GUI to build data set for MorphoSphere
 
 ########################################################################################################################
 # To do (indicated by ##):
+# - Function checking if all sets and classes are filled, then save
 # - Make prettier buttons (e.g. images)
 # - Add Tetris music
 # - Count images by length of directory list instead of counter to ease assembly in multiple sessions.
@@ -58,15 +59,40 @@ for currentRow in range(0,len(dataTable),1):
         dataTableSelected = np.vstack([dataTableSelected, newRow])
 dataTableSelected = np.delete(dataTableSelected, (0), axis=0)
 
+# Shuffle and save new array
+# col 0 = image path "imagePath"
+# col 1 = unique identifier "uniqueID"
+# col 2 = "plate"
+# col 3 = "row"
+# col 4 = "column"
+# col 5 = timepoint "hps"
+# col 6 = timepoint "dps"
+# col 7 = "experimentNumber"
+# col 8 = "date"
+# col 9 = "channel"
+# col 10 = "flagTL"
+# col 11 = "flagFocus"
+# col 12 = "flagWell"
+# col 13 = selected for training flag
+# col 14 = class
+# col 15 = set
+# col 16 = setClass counter
+# col 17 = image height
+# col 18 = image width
+# col 19 = cropped segmented image
+# col 20 = down sampled image
+# Sum =  21 columns
+np.take(dataTableSelected, np.random.rand(dataTableSelected.shape[0]).argsort(), axis=0, out= dataTableSelected)
+selectedTitle = '_focused'
+csvHeader = 'imagePath, uniqueID, plate, row, column, hps, dps, experimentNumber, date, channel, flagTL, flagFocus, flagWell, flagTraining, class, set, setClassCounter, imageHeight, imageWidth, segmentedImage, reducedImage'
+outputDirectory = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\20160126-1-12-4_Spheroid_Complete_Analysis'
+np.savetxt(outputDirectory + '\\' + analysisTitle + selectedTitle +'.csv', dataTableSelected, fmt='%5s', delimiter=',', header=csvHeader )
+classifiedTitle = '_classified'
 
 # Define number of images per set
 imagesTrainingSet = 10
 imagesTestSet = 2 * imagesTrainingSet
 imagesValidationSet = 2 * imagesTrainingSet
-
-# For brief testing only
-#currentImagePath = ['..\\img\\20161111-1-12-6-003hps_C03_w1.TIF', '..\\img\\20161119-1-12-6-194hps_C03_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M19_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M17_w1.TIF', '..\\img\\20161118-1-12-6-168hps_J21_w1.TIF', '..\\img\\20161111-1-12-6-003hps_C03_w1.TIF', '..\\img\\20161119-1-12-6-194hps_C03_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M19_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M17_w1.TIF', '..\\img\\20161118-1-12-6-168hps_J21_w1.TIF', '..\\img\\20161111-1-12-6-003hps_C03_w1.TIF', '..\\img\\20161119-1-12-6-194hps_C03_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M19_w1.TIF', '..\\img\\20161205-1-12-6-654hps_M17_w1.TIF', '..\\img\\20161118-1-12-6-168hps_J21_w1.TIF']
-#currentImageName = ['test1.TIF', 'test2.TIF', 'test3.TIF', 'test4.TIF','test5.TIF', 'test6.TIF', 'test7.TIF', 'test8.TIF', 'test9.TIF','test10.TIF', 'test11.TIF','test12.TIF']
 
 # Directory checks
 if not path.exists(imagesDirectory):
@@ -82,50 +108,52 @@ sets = ['Training','Test','Validation']
 classes = ['healthy_spheroid', 'healthy_non-spheroid', 'unhealthy_spheroid', 'dead_spheroid', 'exclude']
 
 # Check if data set directories exist and require the user to confirm to proceed if it exists
-outputPathCheck = outputDirectory+'\\'+sets[0]+'\\'+classes[0]
-if path.exists(outputPathCheck):
-    print 'QUERY: The defined output directories already exist. To proceed anyway, press [y][Enter], else [n][Enter] to terminate.'
-    proceedFlag = raw_input().lower()
-    if proceedFlag == 'y':
-        print 'Proceeding.'
-    if proceedFlag == 'n':
-        print 'WARNING: MorphoSphere was terminated by the user.'
-        exit()
-    else:
-        print 'QUERY: The defined output directories already exist. To proceed anyway, press [y], else [n] to terminate.'
-
-if not path.exists(outputPathCheck):
-    # Create necessary directories
-    for iSet in sets:
-        for iClass in classes[:-1]:
-            outputPath = outputDirectory + '\\' + iSet + '\\' + iClass
-            if not path.exists(outputPath):
-                makedirs(outputPath)
-
-# Create separate folder for excluded images, disable if desired
-excludePath = outputDirectory + '\\' + classes[-1]
-if not path.exists(excludePath):
-    makedirs(excludePath)
-
-print str(datetime.datetime.now()) + ': Created all necessary output directories.'
+# outputPathCheck = outputDirectory+'\\'+sets[0]+'\\'+classes[0]
+# if path.exists(outputPathCheck):
+#     print 'QUERY: The defined output directories already exist. To proceed anyway, press [y][Enter], else [n][Enter] to terminate.'
+#     proceedFlag = raw_input().lower()
+#     if proceedFlag == 'y':
+#         print 'Proceeding.'
+#     if proceedFlag == 'n':
+#         print 'WARNING: MorphoSphere was terminated by the user.'
+#         exit()
+#     else:
+#         print 'QUERY: The defined output directories already exist. To proceed anyway, press [y], else [n] to terminate.'
+#
+# if not path.exists(outputPathCheck):
+#     # Create necessary directories
+#     for iSet in sets:
+#         for iClass in classes[:-1]:
+#             outputPath = outputDirectory + '\\' + iSet + '\\' + iClass
+#             if not path.exists(outputPath):
+#                 makedirs(outputPath)
+#
+# # Create separate folder for excluded images, disable if desired
+# excludePath = outputDirectory + '\\' + classes[-1]
+# if not path.exists(excludePath):
+#     makedirs(excludePath)
+#
+# print str(datetime.datetime.now()) + ': Created all necessary output directories.'
 
 ########################################################################################################################
 # Generate list of images to classify from selected input directory
-print str(datetime.datetime.now()) + ': Starting to assemble list of images for manual classification from ' + imagesDirectory + '.'
+# print str(datetime.datetime.now()) + ': Starting to assemble list of images for manual classification from ' + imagesDirectory + '.'
+#
+# def getImageFiles(imagesPath, pattern):
+#     fileList = []
+#
+#     for folders, subfolders, filenames in walk(imagesPath):
+#         for filename in filenames:
+#             if re.match(pattern, filename):
+#                 fileList.append(path.join(folders, filename))
+#
+#     shuffle(fileList)
+#     return fileList
+#
+# imagesList = getImageFiles(imagesDirectory, re.compile(r".*" + extension))
+# print str(datetime.datetime.now()) + ': ' + str(len(imagesList)) + ' in ' + imagesDirectory + ' found for manual classification.'
 
-def getImageFiles(imagesPath, pattern):
-    fileList = []
-
-    for folders, subfolders, filenames in walk(imagesPath):
-        for filename in filenames:
-            if re.match(pattern, filename):
-                fileList.append(path.join(folders, filename))
-
-    shuffle(fileList)
-    return fileList
-
-imagesList = getImageFiles(imagesDirectory, re.compile(r".*" + extension))
-print str(datetime.datetime.now()) + ': ' + str(len(imagesList)) + ' in ' + imagesDirectory + ' found for manual classification.'
+print str(datetime.datetime.now()) + ': ' + str(len(dataTableSelected)) + ' focused TL images in ' + imagesDirectory + ' found for manual classification.'
 
 ########################################################################################################################
 # Open GUI
@@ -148,11 +176,14 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
         self.header.setPalette(headerColor)
 
         # Show parameters in Welcome text
-        self.welcomeText.setText('Welcome to the MorphoSphere Data Set Generator. \nThere are ' + str(len(imagesList)) +' images from ' +
+        self.welcomeText.setText('Welcome to the MorphoSphere Data Set Generator. \nThere are ' + str(len(dataTableSelected)) +' images from ' +
                                  imagesDirectory + ' ready to be manually classified as ' + classes[0] + ', ' + classes[1] + ', ' + classes[2] +
                                  ', ' + classes[3] +' or ' + classes[4] + '. You will be shown random images until ' +  str(imagesTrainingSet) +
                                  ' training and ' + str(imagesValidationSet) +
                                  ' validation and validation images have been selected for each data set and copied to ' + outputDirectory + '.')
+
+        # Load data by making it self.
+        self.dataTableSelected = dataTableSelected
 
         # Sample images
         ## Correct positioning
@@ -192,16 +223,17 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
         self.width = 420
         numberOfImagesNeeded = (len(classes)-1)  *  len(sets) * 5/3 * imagesTrainingSet
 
-        if len(imagesList) < numberOfImagesNeeded:
+        if len(self.dataTableSelected) < numberOfImagesNeeded:
             print "WARNING: There are not enough images to fill all sets."
             self.imageDisplay.setPixmap(QtGui.QPixmap(QtGui.QPixmap('..\\img\\logo_listTooShort.png').scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
 
-        if len(imagesList) >= numberOfImagesNeeded:
+        if len(self.dataTableSelected) >= numberOfImagesNeeded:
             ## check if image exists
             self.displayImage()
 
         # Save status
         self.saveButton.setIcon(QtGui.QIcon('..\\img\\logo_save.png'))
+        self.saveButton.clicked.connect(self.saveButton_clicked)
         ## save all parameters and lists
         ## include directory parser window
 
@@ -238,7 +270,7 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
         self.imageDisplay.setPixmap(QtGui.QPixmap(QtGui.QPixmap(self.qImage).scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
 
     def displayImage(self):
-        image = cv2.imread(imagesList[self.imageCounter], 0)  # 0=grey, 1=RGB, -1=unchanged
+        image = cv2.imread(str(self.dataTableSelected[self.imageCounter,0]), 0)  # 0=grey, 1=RGB, -1=unchanged
         self.imageResized = cv2.resize(image, (self.height, self.width), interpolation=cv2.INTER_CUBIC)
         self.scaleFactor = 5.0
         self.sliderFactor.sliderReleased.connect(self.factor_changed)
@@ -255,28 +287,29 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
             QtGui.QPixmap(QtGui.QPixmap(self.qImage).scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
 
         # Create unique image name
-        self.imagesDirectoryPattern = re.sub('\\\\', '_', imagesDirectory)
-        self.imagePathPattern = re.sub('\\\\', '_', imagesList[self.imageCounter])
-        self.imageName = re.sub(self.imagesDirectoryPattern, '', self.imagePathPattern)
+        # self.imagesDirectoryPattern = re.sub('\\\\', '_', imagesDirectory)
+        # self.imagePathPattern = re.sub('\\\\', '_', dataTableSelected[self.imageCounter])
+        # self.imageName = re.sub(self.imagesDirectoryPattern, '', self.imagePathPattern)
 
     def class1Button_clicked(self):
-        print 'Image ' + imagesList[self.imageCounter] + ' is image number ' + str(self.imageCounterClass1 + 1) + ' classified as ' + classes[0] + '.'
-        self.currentImage = cv2.imread(imagesList[self.imageCounter], 0)  # 0=grey, 1=RGB, -1=unchanged
+        print 'Image ' + self.dataTableSelected[self.imageCounter,1] + ' is image number ' + str(self.imageCounterClass1 + 1) + ' classified as ' + classes[0] + '.'
+        self.dataTableSelected[self.imageCounter, 14] = classes[0]
+        self.currentImage = cv2.imread(self.dataTableSelected[self.imageCounter,0], 0)  # 0=grey, 1=RGB, -1=unchanged
 
         if self.imageCounterClass1 < imagesTrainingSet:
-            cv2.imwrite(outputDirectory+'\\'+sets[0]+'\\'+classes[0]+'\\'+ self.imageName, self.currentImage)
+            self.dataTableSelected[self.imageCounter,15] = sets[0]
 
         if imagesTrainingSet <= self.imageCounterClass1 < (3*imagesTrainingSet):
-            cv2.imwrite(outputDirectory + '\\' + sets[1]+'\\'+classes[0]+'\\'+ self.imageName, self.currentImage)
+            self.dataTableSelected[self.imageCounter, 15] = sets[1]
 
         if (3*imagesTrainingSet) <= self.imageCounterClass1 < (5*imagesTrainingSet):
-            cv2.imwrite(outputDirectory + '\\' + sets[2]+'\\'+classes[0]+'\\'+ self.imageName, self.currentImage)
+            self.dataTableSelected[self.imageCounter, 15] = sets[2]
 
         if self.imageCounterClass1 > (5*imagesTrainingSet):
             print "Don't need more images for " + classes[0]
 
         # Test if end of image list reached
-        if self.imageCounter == (len(imagesList) - 1):
+        if self.imageCounter == (len(self.dataTableSelected) - 1):
             print "WARNING: There are no more images to classify."
             self.imageDisplay.setPixmap(QtGui.QPixmap(QtGui.QPixmap('..\\img\\logo_endOfList.png').scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
             self.class1Button.setEnabled(False)
@@ -286,7 +319,7 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
             self.class5Button.setEnabled(False)
             ## Add printing of number of images per folder.
 
-        if self.imageCounter < (len(imagesList) - 1):
+        if self.imageCounter < (len(self.dataTableSelected) - 1):
             self.imageCounter = self.imageCounter + 1
             self.Counter.display(self.imageCounter)
             self.imageCounterClass1 = self.imageCounterClass1 + 1
@@ -295,23 +328,24 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
             self.displayImage()
 
     def class2Button_clicked(self):
-        print 'Image ' + imagesList[self.imageCounter] + ' is image number ' + str(self.imageCounterClass2 + 1) + ' classified as ' + classes[1] + '.'
-        self.currentImage = cv2.imread(imagesList[self.imageCounter], 0)  # 0=grey, 1=RGB, -1=unchanged
+        print 'Image ' + self.dataTableSelected[self.imageCounter,1] + ' is image number ' + str(self.imageCounterClass2 + 1) + ' classified as ' + classes[1] + '.'
+        self.dataTableSelected[self.imageCounter, 14] = classes[1]
+        self.currentImage = cv2.imread(self.dataTableSelected[self.imageCounter,0], 0)  # 0=grey, 1=RGB, -1=unchanged
 
         if self.imageCounterClass1 < imagesTrainingSet:
-            cv2.imwrite(outputDirectory+'\\'+sets[0]+'\\'+classes[1]+'\\'+ self.imageName, self.currentImage)
+            self.dataTableSelected[self.imageCounter, 15] = sets[0]
 
         if imagesTrainingSet <= self.imageCounterClass1 < (3*imagesTrainingSet):
-            cv2.imwrite(outputDirectory + '\\' + sets[1]+'\\'+classes[1]+'\\'+ self.imageName, self.currentImage)
+            self.dataTableSelected[self.imageCounter, 15] = sets[1]
 
         if (3*imagesTrainingSet) <= self.imageCounterClass1 < (5*imagesTrainingSet):
-            cv2.imwrite(outputDirectory + '\\' + sets[2]+'\\'+classes[1]+'\\'+ self.imageName, self.currentImage)
+            self.dataTableSelected[self.imageCounter, 15] = sets[2]
 
         if self.imageCounterClass1 > (5*imagesTrainingSet):
             print "INFO: Don't need more images for " + classes[1]
 
         # Test if end of image list reached
-        if self.imageCounter == (len(imagesList) - 1):
+        if self.imageCounter == (len(self.dataTableSelected) - 1):
             print "WARNING: There are no more images to classify."
             self.imageDisplay.setPixmap(QtGui.QPixmap(QtGui.QPixmap('..\\img\\logo_endOfList.png').scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
             self.class1Button.setEnabled(False)
@@ -321,7 +355,7 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
             self.class5Button.setEnabled(False)
             ## Add printing of number of images per folder.
 
-        if self.imageCounter < (len(imagesList) - 1):
+        if self.imageCounter < (len(self.dataTableSelected) - 1):
             self.imageCounter = self.imageCounter + 1
             self.Counter.display(self.imageCounter)
             self.imageCounterClass2 = self.imageCounterClass2 + 1
@@ -330,23 +364,24 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
             self.displayImage()
 
     def class3Button_clicked(self):
-        print 'Image ' + imagesList[self.imageCounter] + ' is image number ' + str(self.imageCounterClass3 + 1) + ' classified as ' + classes[2] + '.'
-        self.currentImage = cv2.imread(imagesList[self.imageCounter], 0)  # 0=grey, 1=RGB, -1=unchanged
+        print 'Image ' + self.dataTableSelected[self.imageCounter, 1] + ' is image number ' + str(self.imageCounterClass3 + 1) + ' classified as ' + classes[2] + '.'
+        self.dataTableSelected[self.imageCounter, 14] = classes[2]
+        self.currentImage = cv2.imread(self.dataTableSelected[self.imageCounter,0], 0)  # 0=grey, 1=RGB, -1=unchanged
 
         if self.imageCounterClass1 < imagesTrainingSet:
-            cv2.imwrite(outputDirectory+'\\'+sets[0]+'\\'+classes[2]+'\\'+ self.imageName, self.currentImage)
+            self.dataTableSelected[self.imageCounter, 15] = sets[0]
 
         if imagesTrainingSet <= self.imageCounterClass1 < (3*imagesTrainingSet):
-            cv2.imwrite(outputDirectory + '\\' + sets[1]+'\\'+classes[2]+'\\'+ self.imageName, self.currentImage)
+            self.dataTableSelected[self.imageCounter, 15] = sets[1]
 
         if (3*imagesTrainingSet) <= self.imageCounterClass1 < (5*imagesTrainingSet):
-            cv2.imwrite(outputDirectory + '\\' + sets[2]+'\\'+classes[2]+'\\'+ self.imageName, self.currentImage)
+            self.dataTableSelected[self.imageCounter, 15] = sets[2]
 
         if self.imageCounterClass1 > (5*imagesTrainingSet):
             print "INFO: Don't need more images for " + classes[2]
 
         # Test if end of image list reached
-        if self.imageCounter == (len(imagesList) - 1):
+        if self.imageCounter == (len(self.dataTableSelected) - 1):
             print "WARNING: There are no more images to classify."
             self.imageDisplay.setPixmap(QtGui.QPixmap(QtGui.QPixmap('..\\img\\logo_endOfList.png').scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
             self.class1Button.setEnabled(False)
@@ -356,7 +391,7 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
             self.class5Button.setEnabled(False)
             ## Add printing of number of images per folder.
 
-        if self.imageCounter < (len(imagesList) - 1):
+        if self.imageCounter < (len(self.dataTableSelected) - 1):
             self.imageCounter = self.imageCounter + 1
             self.Counter.display(self.imageCounter)
             self.imageCounterClass3 = self.imageCounterClass3 + 1
@@ -365,23 +400,24 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
             self.displayImage()
 
     def class4Button_clicked(self):
-        print 'Image ' + imagesList[self.imageCounter] + ' is image number ' + str(self.imageCounterClass4 + 1) + ' classified as ' + classes[3] + '.'
-        self.currentImage = cv2.imread(imagesList[self.imageCounter], 0)  # 0=grey, 1=RGB, -1=unchanged
+        print 'Image ' + self.dataTableSelected[self.imageCounter, 1] + ' is image number ' + str(self.imageCounterClass4 + 1) + ' classified as ' + classes[3] + '.'
+        self.dataTableSelected[self.imageCounter, 14] = classes[3]
+        self.currentImage = cv2.imread(self.dataTableSelected[self.imageCounter,0], 0)  # 0=grey, 1=RGB, -1=unchanged
 
         if self.imageCounterClass1 < imagesTrainingSet:
-            cv2.imwrite(outputDirectory+'\\'+sets[0]+'\\'+classes[3]+'\\'+ self.imageName, self.currentImage)
+            self.dataTableSelected[self.imageCounter, 15] = sets[0]
 
         if imagesTrainingSet <= self.imageCounterClass1 < (3*imagesTrainingSet):
-            cv2.imwrite(outputDirectory + '\\' + sets[1]+'\\'+classes[3]+'\\'+ self.imageName, self.currentImage)
+            self.dataTableSelected[self.imageCounter, 15] = sets[1]
 
         if (3*imagesTrainingSet) <= self.imageCounterClass1 < (5*imagesTrainingSet):
-            cv2.imwrite(outputDirectory + '\\' + sets[2]+'\\'+classes[3]+'\\'+ self.imageName, self.currentImage)
+            self.dataTableSelected[self.imageCounter, 15] = sets[2]
 
         if self.imageCounterClass1 > (5*imagesTrainingSet):
             print "INFO: Don't need more images for " + classes[3]
 
         # Test if end of image list reached
-        if self.imageCounter == (len(imagesList) - 1):
+        if self.imageCounter == (len(self.dataTableSelected) - 1):
             print "WARNING: There are no more images to classify."
             self.imageDisplay.setPixmap(QtGui.QPixmap(QtGui.QPixmap('..\\img\\logo_endOfList.png').scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
             self.class1Button.setEnabled(False)
@@ -391,7 +427,7 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
             self.class5Button.setEnabled(False)
             ## Add printing of number of images per folder.
 
-        if self.imageCounter < (len(imagesList) - 1):
+        if self.imageCounter < (len(self.dataTableSelected) - 1):
             self.imageCounter = self.imageCounter + 1
             self.Counter.display(self.imageCounter)
             self.imageCounterClass4 = self.imageCounterClass4 + 1
@@ -400,14 +436,14 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
             self.displayImage()
 
     def class5Button_clicked(self):
-        print 'Image ' + imagesList[self.imageCounter] + ' was classified as ' + classes[4] + ' and saved in ' + excludePath + '.'
-        self.currentImage = cv2.imread(imagesList[self.imageCounter], 0)  # 0=grey, 1=RGB, -1=unchanged
-
-        # Save to separate folder, disable if desired
-        cv2.imwrite(excludePath+'\\'+ self.imageName, self.currentImage)
+        print 'Image ' + self.dataTableSelected[self.imageCounter, 1] + ' was classified as ' + classes[4] + '.'
+        self.dataTableSelected[self.imageCounter, 11] = 0
+        self.dataTableSelected[self.imageCounter, 14] = classes[4]
+        self.dataTableSelected[self.imageCounter, 15] = classes[4]
+        self.currentImage = cv2.imread(self.dataTableSelected[self.imageCounter,0], 0)  # 0=grey, 1=RGB, -1=unchanged
 
         # Test if end of image list reached
-        if self.imageCounter == (len(imagesList) - 1):
+        if self.imageCounter == (len(self.dataTableSelected) - 1):
             print "WARNING: There are no more images to classify."
             self.imageDisplay.setPixmap(QtGui.QPixmap(QtGui.QPixmap('..\\img\\logo_endOfList.png').scaled(self.height, self.width, QtCore.Qt.KeepAspectRatio)))
             self.class1Button.setEnabled(False)
@@ -417,7 +453,7 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
             self.class5Button.setEnabled(False)
             ## Add printing of number of images per folder.
 
-        if self.imageCounter < (len(imagesList) - 1):
+        if self.imageCounter < (len(self.dataTableSelected) - 1):
             self.imageCounter = self.imageCounter + 1
             self.Counter.display(self.imageCounter)
             # Numbers of images in class 5 is not tracked
@@ -428,6 +464,25 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
     def cancelButton_clicked(self):
         print 'WARNING: MorphoSphere was terminated by the user.'
         self.close()
+
+    def saveButton_clicked(self):
+        print 'MorphoSphere was terminated by the user. All data will be saved to ' + outputDirectory + '.'
+
+        # Strip table of spaces
+        self.dataTableSelected = self.dataTableSelected.astype(str)
+        self.dataTableSelected = np.char.strip(self.dataTableSelected)
+
+        # Paste images with flagFocus = 1 in new array
+        dataTableClassified = np.zeros((1, 21), dtype=object)
+        for currentRow in range(0, len(self.dataTableSelected), 1):
+            line = self.dataTableSelected[currentRow, 11]
+            if self.dataTableSelected[currentRow, 11] == '1':
+                newRow = self.dataTableSelected[currentRow, :]
+                dataTableClassified = np.vstack([dataTableClassified, newRow])
+        dataTableClassified = np.delete(dataTableClassified, (0), axis=0)
+
+        np.savetxt(outputDirectory + '\\' + analysisTitle + classifiedTitle + '.csv', dataTableClassified, fmt='%5s',delimiter=',', header=csvHeader)
+
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
