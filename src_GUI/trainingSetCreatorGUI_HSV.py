@@ -13,6 +13,7 @@ TrainingSetCreatorGUI: GUI to build data set for MorphoSphere
 
 ########################################################################################################################
 # To do (indicated by ##):
+# - Include back button
 # - Function checking if all sets and classes are filled, then save
 # - Make prettier buttons (e.g. images)
 # - Add Tetris music
@@ -89,11 +90,6 @@ outputDirectory = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\20160126-1-12-4_Sphero
 np.savetxt(outputDirectory + '\\' + analysisTitle + selectedTitle +'.csv', dataTableSelected, fmt='%5s', delimiter=',', header=csvHeader )
 classifiedTitle = '_classified'
 
-# Define number of images per set
-imagesTrainingSet = 10
-imagesTestSet = 2 * imagesTrainingSet
-imagesValidationSet = 2 * imagesTrainingSet
-
 # Directory checks
 if not path.exists(imagesDirectory):
     print 'WARNING: The defined input directory does not exist. MorphoShere will terminate.'
@@ -106,6 +102,11 @@ sets = ['Training','Test','Validation']
 
 # Define class options
 classes = ['healthy_spheroid', 'healthy_non-spheroid', 'unhealthy_spheroid', 'dead_spheroid', 'exclude']
+
+# Define number of images per set in array
+imagesTrainingSet = 10
+imagesTestSet = 2 * imagesTrainingSet
+imagesValidationSet = 2 * imagesTrainingSet
 
 # Check if data set directories exist and require the user to confirm to proceed if it exists
 # outputPathCheck = outputDirectory+'\\'+sets[0]+'\\'+classes[0]
@@ -176,6 +177,7 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
         self.header.setPalette(headerColor)
 
         # Show parameters in Welcome text
+        ## Make font size dynamical
         self.welcomeText.setText('Welcome to the MorphoSphere Data Set Generator. \nThere are ' + str(len(dataTableSelected)) +' images from ' +
                                  imagesDirectory + ' ready to be manually classified as ' + classes[0] + ', ' + classes[1] + ', ' + classes[2] +
                                  ', ' + classes[3] +' or ' + classes[4] + '. You will be shown random images until ' +  str(imagesTrainingSet) +
@@ -294,7 +296,6 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
     def class1Button_clicked(self):
         print 'Image ' + self.dataTableSelected[self.imageCounter,1] + ' is image number ' + str(self.imageCounterClass1 + 1) + ' classified as ' + classes[0] + '.'
         self.dataTableSelected[self.imageCounter, 14] = classes[0]
-        self.currentImage = cv2.imread(self.dataTableSelected[self.imageCounter,0], 0)  # 0=grey, 1=RGB, -1=unchanged
 
         if self.imageCounterClass1 < imagesTrainingSet:
             self.dataTableSelected[self.imageCounter,15] = sets[0]
@@ -305,7 +306,8 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
         if (3*imagesTrainingSet) <= self.imageCounterClass1 < (5*imagesTrainingSet):
             self.dataTableSelected[self.imageCounter, 15] = sets[2]
 
-        if self.imageCounterClass1 > (5*imagesTrainingSet):
+        if self.imageCounterClass1 >= (5*imagesTrainingSet):
+            self.dataTableSelected[self.imageCounter, 14] = 0
             print "Don't need more images for " + classes[0]
 
         # Test if end of image list reached
@@ -330,18 +332,18 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
     def class2Button_clicked(self):
         print 'Image ' + self.dataTableSelected[self.imageCounter,1] + ' is image number ' + str(self.imageCounterClass2 + 1) + ' classified as ' + classes[1] + '.'
         self.dataTableSelected[self.imageCounter, 14] = classes[1]
-        self.currentImage = cv2.imread(self.dataTableSelected[self.imageCounter,0], 0)  # 0=grey, 1=RGB, -1=unchanged
 
-        if self.imageCounterClass1 < imagesTrainingSet:
+        if self.imageCounterClass2 < imagesTrainingSet:
             self.dataTableSelected[self.imageCounter, 15] = sets[0]
 
-        if imagesTrainingSet <= self.imageCounterClass1 < (3*imagesTrainingSet):
+        if imagesTrainingSet <= self.imageCounterClass2 < (3*imagesTrainingSet):
             self.dataTableSelected[self.imageCounter, 15] = sets[1]
 
-        if (3*imagesTrainingSet) <= self.imageCounterClass1 < (5*imagesTrainingSet):
+        if (3*imagesTrainingSet) <= self.imageCounterClass2 < (5*imagesTrainingSet):
             self.dataTableSelected[self.imageCounter, 15] = sets[2]
 
-        if self.imageCounterClass1 > (5*imagesTrainingSet):
+        if self.imageCounterClass2 >= (5*imagesTrainingSet):
+            self.dataTableSelected[self.imageCounter, 14] = 0
             print "INFO: Don't need more images for " + classes[1]
 
         # Test if end of image list reached
@@ -366,18 +368,18 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
     def class3Button_clicked(self):
         print 'Image ' + self.dataTableSelected[self.imageCounter, 1] + ' is image number ' + str(self.imageCounterClass3 + 1) + ' classified as ' + classes[2] + '.'
         self.dataTableSelected[self.imageCounter, 14] = classes[2]
-        self.currentImage = cv2.imread(self.dataTableSelected[self.imageCounter,0], 0)  # 0=grey, 1=RGB, -1=unchanged
 
-        if self.imageCounterClass1 < imagesTrainingSet:
+        if self.imageCounterClass3 < imagesTrainingSet:
             self.dataTableSelected[self.imageCounter, 15] = sets[0]
 
-        if imagesTrainingSet <= self.imageCounterClass1 < (3*imagesTrainingSet):
+        if imagesTrainingSet <= self.imageCounterClass3 < (3*imagesTrainingSet):
             self.dataTableSelected[self.imageCounter, 15] = sets[1]
 
-        if (3*imagesTrainingSet) <= self.imageCounterClass1 < (5*imagesTrainingSet):
+        if (3*imagesTrainingSet) <= self.imageCounterClass3 < (5*imagesTrainingSet):
             self.dataTableSelected[self.imageCounter, 15] = sets[2]
 
-        if self.imageCounterClass1 > (5*imagesTrainingSet):
+        if self.imageCounterClass3 >= (5*imagesTrainingSet):
+            self.dataTableSelected[self.imageCounter, 14] = 0
             print "INFO: Don't need more images for " + classes[2]
 
         # Test if end of image list reached
@@ -402,18 +404,18 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
     def class4Button_clicked(self):
         print 'Image ' + self.dataTableSelected[self.imageCounter, 1] + ' is image number ' + str(self.imageCounterClass4 + 1) + ' classified as ' + classes[3] + '.'
         self.dataTableSelected[self.imageCounter, 14] = classes[3]
-        self.currentImage = cv2.imread(self.dataTableSelected[self.imageCounter,0], 0)  # 0=grey, 1=RGB, -1=unchanged
 
-        if self.imageCounterClass1 < imagesTrainingSet:
+        if self.imageCounterClass4 < imagesTrainingSet:
             self.dataTableSelected[self.imageCounter, 15] = sets[0]
 
-        if imagesTrainingSet <= self.imageCounterClass1 < (3*imagesTrainingSet):
+        if imagesTrainingSet <= self.imageCounterClass4 < (3*imagesTrainingSet):
             self.dataTableSelected[self.imageCounter, 15] = sets[1]
 
-        if (3*imagesTrainingSet) <= self.imageCounterClass1 < (5*imagesTrainingSet):
+        if (3*imagesTrainingSet) <= self.imageCounterClass4 < (5*imagesTrainingSet):
             self.dataTableSelected[self.imageCounter, 15] = sets[2]
 
-        if self.imageCounterClass1 > (5*imagesTrainingSet):
+        if self.imageCounterClass4 >= (5*imagesTrainingSet):
+            self.dataTableSelected[self.imageCounter, 14] = 0
             print "INFO: Don't need more images for " + classes[3]
 
         # Test if end of image list reached
@@ -440,7 +442,6 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
         self.dataTableSelected[self.imageCounter, 11] = 0
         self.dataTableSelected[self.imageCounter, 14] = classes[4]
         self.dataTableSelected[self.imageCounter, 15] = classes[4]
-        self.currentImage = cv2.imread(self.dataTableSelected[self.imageCounter,0], 0)  # 0=grey, 1=RGB, -1=unchanged
 
         # Test if end of image list reached
         if self.imageCounter == (len(self.dataTableSelected) - 1):
