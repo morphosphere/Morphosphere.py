@@ -36,115 +36,115 @@ classes = ['healthy_spheroid', 'healthy_non-spheroid', 'unhealthy_spheroid', 'de
 #inputImage= 'Z:\\Vardan_Andriasyan\\Morphosphere\\HT-29\\Test\\NonSphNonHealthy\\20160205-corning-all-spheroids-p4-242hps_G05_w1.TIF'
 #fullImage, croppedImage, croppedBWImage, spheroidAttributes = segmentSpheroid(inputImage, 12, 501, 20000)
 
-trainingSpheroids = []
-testSpheroids = []
-validationSpheroids = []
-trainingLabels = []
-testLabels = []
-validationLabels = []
-
-allSizes = []
-
-# Load dataTableClassified
-dataTableClassified = np.genfromtxt(trainingSetPath, dtype = object, delimiter =',', skip_header = 1)
-dataTableClassified = dataTableClassified.astype(str)
-dataTableClassified = np.char.strip(dataTableClassified)
-
-# Define segmentation parameters
-dilationDiskDefault = 14
-dilationDisk0 = 16
-blockSize = 501
-minSpheroidArea = 20000
-thresholdCorrectionDefault = 5
-thresholdCorrection0 = 3
-
-# Visualization flag for segmentation plots
-visualize = False
-
-for image in range(0,len(dataTableClassified)-1,1):
-    if dataTableClassified[image, 15] == 'Training' or dataTableClassified[image, 15] ==  'Test' or dataTableClassified[image, 15] ==  'Validation':
-        print dataTableClassified[image,0]
-        # Segment clump using fine-tuned parameters
-        if dataTableClassified[image,5] == '003' or dataTableClassified[image,5] == '004' or dataTableClassified[image,5] == '005' or dataTableClassified[image,5] == '006' or dataTableClassified[image,5] == '007':
-            dilationDisk = dilationDisk0
-            thresholdCorrection = thresholdCorrection0
-        else:
-            dilationDisk = dilationDiskDefault
-            thresholdCorrection = thresholdCorrectionDefault
-        #print 'Segmentation parameters are ' + str(dilationDisk) + str(thresholdCorrection
-        croppedImage, croppedBWImage, spheroidAttributes = segmentSpheroid(dataTableClassified[image,0], dilationDisk, blockSize, minSpheroidArea, thresholdCorrection, visualize)
-        # Populate an array with all image sizes to later obtain max size
-        imageHeight, imageWidth = croppedImage.shape[:2]
-        allSizes.append(max([imageHeight, imageWidth]))
-        # Load cropped images into array structure
-        if dataTableClassified[image, 15] == 'Training':
-            trainingSpheroids.append(croppedImage)
-            if dataTableClassified[image,14] == 'healthy_spheroid':
-                trainingLabels.append([0])
-            if dataTableClassified[image,14] == 'healthy_non-spheroid':
-                trainingLabels.append([1])
-            if dataTableClassified[image,14] == 'unhealthy_spheroid':
-                trainingLabels.append([2])
-            if dataTableClassified[image,14] == 'dead_spheroid':
-                trainingLabels.append([3])
-        if dataTableClassified[image,15] == 'Test':
-            testSpheroids.append(croppedImage)
-            if dataTableClassified[image,14] == 'healthy_spheroid':
-                testLabels.append([0])
-            if dataTableClassified[image,14] == 'healthy_non-spheroid':
-                testLabels.append([1])
-            if dataTableClassified[image,14] == 'unhealthy_spheroid':
-                testLabels.append([2])
-            if dataTableClassified[image,14] == 'dead_spheroid':
-                testLabels.append([3])
-        if dataTableClassified[image,15] == 'Validation':
-            validationSpheroids.append(croppedImage)
-            if dataTableClassified[image,14] == 'healthy_spheroid':
-                validationLabels.append([0])
-            if dataTableClassified[image,14] == 'healthy_non-spheroid':
-                validationLabels.append([1])
-            if dataTableClassified[image,14] == 'unhealthy_spheroid':
-                validationLabels.append([2])
-            if dataTableClassified[image,14] == 'dead_spheroid':
-                validationLabels.append([3])
-
-# Detect maximum image size
-maximumImageSize = max(allSizes)
-print 'Maximum image size is ' + str(max(allSizes)) + '.'
-
-# Load arrays of cropped images into dictionary
-segmentationData = {"testSpheroids": testSpheroids, "testLabels": testLabels,"trainingSpheroids": trainingSpheroids, "trainingLabels": trainingLabels,"validationSpheroids": validationSpheroids, "validationLabels": validationLabels,"maximumImageSize": maximumImageSize}
-# Pickle dictionary
-pickle.dump(segmentationData, open(parentDir + '\\' + trainingSetCsv + '_segmentationData4Classes.p', "wb" ) )
-
-print 'Successfully created data sets for ' + str(dataTableClassifiedPath) + ' .'
-
-##############################################################################################
-# Load segmentation data, create random rotation replicates
-##############################################################################################
-
-from generateBatch import generateBatch
-
-#segmentationData = pickle.load( open( "segmentationData2Classes.p", "rb" ) )
-#numberOfClasses = 2
-
-segmentationData = pickle.load(open(parentDir + '\\'+ trainingSetCsv + '_segmentationData4Classes.p', "rb" ) )
-numberOfClasses = 4
-
-maximumImageSize = segmentationData["maximumImageSize"]
-
-outputImageSize = 128
-# Number of replicates boosting training set
-numberOfReplicates = 10
-trainingSet = generateBatch(segmentationData["trainingSpheroids"],segmentationData["trainingLabels"], maximumImageSize, outputImageSize, numberOfReplicates)
-testingSet = generateBatch(segmentationData["testSpheroids"],segmentationData["testLabels"], maximumImageSize, outputImageSize, numberOfReplicates)
-validationSet = generateBatch(segmentationData["validationSpheroids"],segmentationData["validationLabels"], maximumImageSize, outputImageSize, numberOfReplicates)
-
-cnnData = {"testingSet": testingSet,"trainingSet": trainingSet,"validationSet": validationSet}
-pickle.dump( cnnData, open(parentDir + '\\'+ trainingSetCsv + '_cnnData.p', "wb" ) )
-
-print 'There are ' + str(len(trainingSet[0])) + 'training set images.'
-print 'Successfully loaded the CNN data with for ' + str(dataTableClassifiedPath) + ' with ' + str(numberOfReplicates) + ' for each of the ' + str(len(trainingSet[0])) + ' training set images.'
+# trainingSpheroids = []
+# testSpheroids = []
+# validationSpheroids = []
+# trainingLabels = []
+# testLabels = []
+# validationLabels = []
+#
+# allSizes = []
+#
+# # Load dataTableClassified
+# dataTableClassified = np.genfromtxt(trainingSetPath, dtype = object, delimiter =',', skip_header = 1)
+# dataTableClassified = dataTableClassified.astype(str)
+# dataTableClassified = np.char.strip(dataTableClassified)
+#
+# # Define segmentation parameters
+# dilationDiskDefault = 14
+# dilationDisk0 = 16
+# blockSize = 501
+# minSpheroidArea = 20000
+# thresholdCorrectionDefault = 5
+# thresholdCorrection0 = 3
+#
+# # Visualization flag for segmentation plots
+# visualize = False
+#
+# for image in range(0,len(dataTableClassified)-1,1):
+#     if dataTableClassified[image, 15] == 'Training' or dataTableClassified[image, 15] ==  'Test' or dataTableClassified[image, 15] ==  'Validation':
+#         print dataTableClassified[image,0]
+#         # Segment clump using fine-tuned parameters
+#         if dataTableClassified[image,5] == '003' or dataTableClassified[image,5] == '004' or dataTableClassified[image,5] == '005' or dataTableClassified[image,5] == '006' or dataTableClassified[image,5] == '007':
+#             dilationDisk = dilationDisk0
+#             thresholdCorrection = thresholdCorrection0
+#         else:
+#             dilationDisk = dilationDiskDefault
+#             thresholdCorrection = thresholdCorrectionDefault
+#         #print 'Segmentation parameters are ' + str(dilationDisk) + str(thresholdCorrection
+#         croppedImage, croppedBWImage, spheroidAttributes = segmentSpheroid(dataTableClassified[image,0], dilationDisk, blockSize, minSpheroidArea, thresholdCorrection, visualize)
+#         # Populate an array with all image sizes to later obtain max size
+#         imageHeight, imageWidth = croppedImage.shape[:2]
+#         allSizes.append(max([imageHeight, imageWidth]))
+#         # Load cropped images into array structure
+#         if dataTableClassified[image, 15] == 'Training':
+#             trainingSpheroids.append(croppedImage)
+#             if dataTableClassified[image,14] == 'healthy_spheroid':
+#                 trainingLabels.append([0])
+#             if dataTableClassified[image,14] == 'healthy_non-spheroid':
+#                 trainingLabels.append([1])
+#             if dataTableClassified[image,14] == 'unhealthy_spheroid':
+#                 trainingLabels.append([2])
+#             if dataTableClassified[image,14] == 'dead_spheroid':
+#                 trainingLabels.append([3])
+#         if dataTableClassified[image,15] == 'Test':
+#             testSpheroids.append(croppedImage)
+#             if dataTableClassified[image,14] == 'healthy_spheroid':
+#                 testLabels.append([0])
+#             if dataTableClassified[image,14] == 'healthy_non-spheroid':
+#                 testLabels.append([1])
+#             if dataTableClassified[image,14] == 'unhealthy_spheroid':
+#                 testLabels.append([2])
+#             if dataTableClassified[image,14] == 'dead_spheroid':
+#                 testLabels.append([3])
+#         if dataTableClassified[image,15] == 'Validation':
+#             validationSpheroids.append(croppedImage)
+#             if dataTableClassified[image,14] == 'healthy_spheroid':
+#                 validationLabels.append([0])
+#             if dataTableClassified[image,14] == 'healthy_non-spheroid':
+#                 validationLabels.append([1])
+#             if dataTableClassified[image,14] == 'unhealthy_spheroid':
+#                 validationLabels.append([2])
+#             if dataTableClassified[image,14] == 'dead_spheroid':
+#                 validationLabels.append([3])
+#
+# # Detect maximum image size
+# maximumImageSize = max(allSizes)
+# print 'Maximum image size is ' + str(max(allSizes)) + '.'
+#
+# # Load arrays of cropped images into dictionary
+# segmentationData = {"testSpheroids": testSpheroids, "testLabels": testLabels,"trainingSpheroids": trainingSpheroids, "trainingLabels": trainingLabels,"validationSpheroids": validationSpheroids, "validationLabels": validationLabels,"maximumImageSize": maximumImageSize}
+# # Pickle dictionary
+# pickle.dump(segmentationData, open(parentDir + '\\' + trainingSetCsv + '_segmentationData4Classes.p', "wb" ) )
+#
+# print 'Successfully created data sets for ' + str(trainingSetPath) + ' .'
+#
+# ##############################################################################################
+# # Load segmentation data, create random rotation replicates
+# ##############################################################################################
+#
+# from generateBatch import generateBatch
+#
+# #segmentationData = pickle.load( open( "segmentationData2Classes.p", "rb" ) )
+# #numberOfClasses = 2
+#
+# segmentationData = pickle.load(open(parentDir + '\\'+ trainingSetCsv + '_segmentationData4Classes.p', "rb" ) )
+# numberOfClasses = 4
+#
+# maximumImageSize = segmentationData["maximumImageSize"]
+#
+# outputImageSize = 128
+# # Number of replicates boosting training set
+# numberOfReplicates = 10
+# trainingSet = generateBatch(segmentationData["trainingSpheroids"],segmentationData["trainingLabels"], maximumImageSize, outputImageSize, numberOfReplicates)
+# testingSet = generateBatch(segmentationData["testSpheroids"],segmentationData["testLabels"], maximumImageSize, outputImageSize, numberOfReplicates)
+# validationSet = generateBatch(segmentationData["validationSpheroids"],segmentationData["validationLabels"], maximumImageSize, outputImageSize, numberOfReplicates)
+#
+# cnnData = {"testingSet": testingSet,"trainingSet": trainingSet,"validationSet": validationSet}
+# pickle.dump( cnnData, open(parentDir + '\\'+ trainingSetCsv + '_cnnData.p', "wb" ) )
+#
+# print 'There are ' + str(len(trainingSet[0])) + 'training set images.'
+# print 'Successfully loaded the CNN data with for ' + str(trainingSetPath) + ' with ' + str(numberOfReplicates) + ' for each of the ' + str(len(trainingSet[0])) + ' training set images.'
 
 ##############################################################################################
 # Load data sets
@@ -163,7 +163,7 @@ outputImageSize = 128
 print 'There are ' + str(len(trainingSet[0])) + ' training set images.'
 batch_size = len(trainingSet[0])
 
-print 'Successfully loaded data sets for ' + str(dataTableClassifiedPath) + '.'
+print 'Successfully loaded data sets for ' + str(trainingSetPath) + '.'
 
 ##############################################################################################
 # Convolutional Neural Network
@@ -354,7 +354,7 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200, nkerns=[20, 50], batch_size
                 validation_losses = [validate_model(i) for i
                                      in range(n_valid_batches)]
                 this_validation_loss = numpy.mean(validation_losses)
-                print('epoch %i, minibatch %i/%i, validation error %f %%' % (epoch, minibatch_index + 1, n_train_batches, this_validation_loss * 100.))
+                print('Epoch %i, minibatch %i/%i, validation error %f %%' % (epoch, minibatch_index + 1, n_train_batches, this_validation_loss * 100.))
 
                 validationError.append(this_validation_loss * 100.)
 
@@ -376,13 +376,13 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200, nkerns=[20, 50], batch_size
                         for i in range(n_test_batches)
                     ]
                     test_score = numpy.mean(test_losses)
-                    print(('Epoch %i, minibatch %i/%i, test error of best model %f %%') % (epoch, minibatch_index + 1, n_train_batches, test_score * 100.))
+                    print(('-------Epoch %i, minibatch %i/%i, test error of best model %f %%') % (epoch, minibatch_index + 1, n_train_batches, test_score * 100.))
 
                 else:
                     test_score = 0
 
-            newRow = [epoch, this_validation_loss * 100., test_score * 100.]
-            performanceTracker = numpy.concatenate((performanceTracker, newRow))
+            newRow = ([epoch, this_validation_loss * 100., test_score * 100.])
+            performanceTracker = numpy.vstack((performanceTracker, newRow))
             performanceTracker = numpy.delete(performanceTracker, (0), axis=0)
 
             if patience <= iter:
@@ -391,9 +391,7 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200, nkerns=[20, 50], batch_size
 
     end_time = timeit.default_timer()
     print('Optimization complete.')
-    print('Best validation score of %f %% obtained at iteration %i, '
-          'with test performance %f %%' %
-          (best_validation_loss * 100., best_iter + 1, test_score * 100.))
+    print('Best validation score of %f %% obtained at iteration %i, with test performance %f %%' % (best_validation_loss * 100., best_iter + 1, test_score * 100.))
     print(('The code for file ' + ' ran for %.2fm' % ((end_time - start_time) / 60.)))
     
     return validationError, performanceTracker
