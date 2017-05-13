@@ -1,3 +1,4 @@
+## Make 'as' uniform
 import cPickle as pickle
 import numpy as np
 import matplotlib.pyplot as plt
@@ -24,9 +25,11 @@ Demo for MorphoSphere
 @author: Vardan Andriasyan, Fanny Georgi
 """
 
-#
+# User input
 parentDir = 'N:\\Fanny_Georgi\\1-12_TumorRemission\\20160126-1-12-4_Spheroid_Complete_Analysis'
-dataTableClassifiedPath = parentDir +'\\'+ '20160512_HT29complete_strict_classified.csv'
+trainingSetCsv = '20160512_HT29complete_strict_classified'
+trainingSetPath = parentDir +'\\'+ trainingSetCsv + '.csv'
+runCounter = '4'
 sets = ['Training','Test','Validation']
 classes = ['healthy_spheroid', 'healthy_non-spheroid', 'unhealthy_spheroid', 'dead_spheroid']
 
@@ -43,7 +46,7 @@ validationLabels = []
 allSizes = []
 
 # Load dataTableClassified
-dataTableClassified = np.genfromtxt(dataTableClassifiedPath, dtype = object, delimiter =',', skip_header = 1)
+dataTableClassified = np.genfromtxt(trainingSetPath, dtype = object, delimiter =',', skip_header = 1)
 dataTableClassified = dataTableClassified.astype(str)
 dataTableClassified = np.char.strip(dataTableClassified)
 
@@ -107,12 +110,12 @@ for image in range(0,len(dataTableClassified)-1,1):
 
 # Detect maximum image size
 maximumImageSize = max(allSizes)
-print 'Maximum image size is ' + str(max(allSizes)) + ' .'
+print 'Maximum image size is ' + str(max(allSizes)) + '.'
 
 # Load arrays of cropped images into dictionary
 segmentationData = {"testSpheroids": testSpheroids, "testLabels": testLabels,"trainingSpheroids": trainingSpheroids, "trainingLabels": trainingLabels,"validationSpheroids": validationSpheroids, "validationLabels": validationLabels,"maximumImageSize": maximumImageSize}
 # Pickle dictionary
-pickle.dump(segmentationData, open( "segmentationData4Classes_HT29complete_strict.p", "wb" ) )
+pickle.dump(segmentationData, open(parentDir + '\\' + trainingSetCsv + '_segmentationData4Classes.p', "wb" ) )
 
 print 'Successfully created data sets for ' + str(dataTableClassifiedPath) + ' .'
 
@@ -125,7 +128,7 @@ from generateBatch import generateBatch
 #segmentationData = pickle.load( open( "segmentationData2Classes.p", "rb" ) )
 #numberOfClasses = 2
 
-segmentationData = pickle.load( open("segmentationData4Classes_HT29complete_strict.p", "rb" ) )
+segmentationData = pickle.load(open(parentDir + '\\'+ trainingSetCsv + '_segmentationData4Classes.p', "rb" ) )
 numberOfClasses = 4
 
 maximumImageSize = segmentationData["maximumImageSize"]
@@ -138,7 +141,7 @@ testingSet = generateBatch(segmentationData["testSpheroids"],segmentationData["t
 validationSet = generateBatch(segmentationData["validationSpheroids"],segmentationData["validationLabels"], maximumImageSize, outputImageSize, numberOfReplicates)
 
 cnnData = {"testingSet": testingSet,"trainingSet": trainingSet,"validationSet": validationSet}
-pickle.dump( cnnData, open( "cnnData_HT29complete_strict.p", "wb" ) )
+pickle.dump( cnnData, open(parentDir + '\\'+ trainingSetCsv + '_cnnData.p', "wb" ) )
 
 print 'There are ' + str(len(trainingSet[0])) + 'training set images.'
 print 'Successfully loaded the CNN data with for ' + str(dataTableClassifiedPath) + ' with ' + str(numberOfReplicates) + ' for each of the ' + str(len(trainingSet[0])) + ' training set images.'
@@ -147,7 +150,7 @@ print 'Successfully loaded the CNN data with for ' + str(dataTableClassifiedPath
 # Load data sets
 ##############################################################################################
 
-cnnData = pickle.load(open( "cnnData_HT29complete_strict.p", "rb" ) )
+cnnData = pickle.load(open(parentDir + '\\'+ trainingSetCsv + '_cnnData.p', "rb" ) )
 trainingSet = cnnData["trainingSet"]
 testingSet = cnnData["testingSet"] 
 validationSet = cnnData["validationSet"]
@@ -163,7 +166,7 @@ batch_size = len(trainingSet[0])
 print 'Successfully loaded data sets for ' + str(dataTableClassifiedPath) + '.'
 
 ##############################################################################################
-# Convoltional Neural Network
+# Convolutional Neural Network
 ##############################################################################################
 
 from loadCNNData import loadCNNData
@@ -190,7 +193,7 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200, nkerns=[20, 50], batch_size
     valid_set_x, valid_set_y = datasets[1]
     test_set_x, test_set_y = datasets[2]
 
-    # compute number of minibatches for training, validation and testing
+    # Compute number of minibatches for training, validation and testing
     n_train_batches = train_set_x.get_value(borrow=True).shape[0]
     n_valid_batches = valid_set_x.get_value(borrow=True).shape[0]
     n_test_batches = test_set_x.get_value(borrow=True).shape[0]
@@ -198,7 +201,7 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200, nkerns=[20, 50], batch_size
     n_valid_batches //= batch_size
     n_test_batches //= batch_size
 
-    # allocate symbolic variables for the data
+    # Allocate symbolic variables for the data
     index = T.lscalar()  # index to a [mini]batch
 
     # start-snippet-1
@@ -332,6 +335,9 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200, nkerns=[20, 50], batch_size
     epoch = 0
     done_looping = False
 
+    # Array to track learning performance
+    performanceTracker = numpy.zeros((1, 3), dtype=object)
+
     while (epoch < n_epochs) and (not done_looping):
         epoch = epoch + 1
         for minibatch_index in range(n_train_batches):
@@ -370,7 +376,14 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200, nkerns=[20, 50], batch_size
                         for i in range(n_test_batches)
                     ]
                     test_score = numpy.mean(test_losses)
-                    print(('     epoch %i, minibatch %i/%i, test error of best model %f %%') % (epoch, minibatch_index + 1, n_train_batches, test_score * 100.))
+                    print(('Epoch %i, minibatch %i/%i, test error of best model %f %%') % (epoch, minibatch_index + 1, n_train_batches, test_score * 100.))
+
+                else:
+                    test_score = 0
+
+            newRow = [epoch, this_validation_loss * 100., test_score * 100.]
+            performanceTracker = numpy.concatenate((performanceTracker, newRow))
+            performanceTracker = numpy.delete(performanceTracker, (0), axis=0)
 
             if patience <= iter:
                 done_looping = True
@@ -383,11 +396,14 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200, nkerns=[20, 50], batch_size
           (best_validation_loss * 100., best_iter + 1, test_score * 100.))
     print(('The code for file ' + ' ran for %.2fm' % ((end_time - start_time) / 60.)))
     
-    return validationError
+    return validationError, performanceTracker
 
 # Define optimized input parameters here
 # batch_size = len(trainingSet[0]) # (number of images per training set) * (number of classes) * (number of replicates)
-validationError = evaluate_lenet5(learning_rate=0.01, n_epochs=200, nkerns=[20, 50], batch_size=400, numberOfClasses=4)
+validationError = evaluate_lenet5(learning_rate=0.1, n_epochs=200, nkerns=[20, 50], batch_size=400, numberOfClasses=4)
+
+trackerHeader = 'epoch, valError, testError'
+numpy.savetxt(parentDir + '\\' + trainingSetCsv + '_performance_' + runCounter + '.csv', performanceTracker, fmt='%5s', delimiter=',', header=trackerHeader)
 
 def experiment(state, channel):
     evaluate_lenet5(state.learning_rate, dataset=state.dataset)
