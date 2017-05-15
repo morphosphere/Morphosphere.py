@@ -378,9 +378,6 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200, nkerns=[20, 50], batch_size
                     test_score = numpy.mean(test_losses)
                     print(('-------Epoch %i, minibatch %i/%i, test error of best model %f %%') % (epoch, minibatch_index + 1, n_train_batches, test_score * 100.))
 
-                else:
-                    test_score = 0
-
             newRow = ([epoch, this_validation_loss * 100., test_score * 100.])
             performanceTracker = numpy.vstack((performanceTracker, newRow))
             performanceTracker = numpy.delete(performanceTracker, (0), axis=0)
@@ -398,7 +395,7 @@ def evaluate_lenet5(learning_rate=0.1, n_epochs=200, nkerns=[20, 50], batch_size
 
 # Define optimized input parameters here
 # batch_size = len(trainingSet[0]) # (number of images per training set) * (number of classes) * (number of replicates)
-validationError = evaluate_lenet5(learning_rate=0.1, n_epochs=200, nkerns=[20, 50], batch_size=400, numberOfClasses=4)
+validationError, performanceTracker = evaluate_lenet5(learning_rate=0.1, n_epochs=200, nkerns=[20, 50], batch_size=400, numberOfClasses=4)
 
 trackerHeader = 'epoch, valError, testError'
 numpy.savetxt(parentDir + '\\' + trainingSetCsv + '_performance_' + runCounter + '.csv', performanceTracker, fmt='%5s', delimiter=',', header=trackerHeader)
